@@ -142,14 +142,12 @@ class AstrumFM(QMainWindow):
     def navigate_to_path(self):
         path = self.path_input.text()
         if os.path.exists(path):
-            self.files.setRootIndex(self.fs_model.index(path))
-            self.path_input.setText(path)
+            self.navigate_to(path)
 
     def open_file(self, index):
         path = self.fs_model.filePath(index)
         if os.path.isdir(path):
-            self.files.setRootIndex(index)
-            self.path_input.setText(path)
+            self.navigate_to(path)
         else:
             try:
                 subprocess.Popen(['xdg-open', path])
@@ -185,9 +183,18 @@ class AstrumFM(QMainWindow):
         self.navigate_to(item.data(Qt.ItemDataRole.UserRole))
 
     def navigate_to(self, path):
-        if os.path.exists(path):
+        if os.access(path, os.R_OK):
             self.files.setRootIndex(self.fs_model.index(path))
             self.path_input.setText(path)
+        else:
+            reply = QMessageBox.question(
+                self, 
+                "Permission Denied",
+                f"Access to {path} is denied.\nWould you like to open it as root?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.open_as_root(path)
 
     def open_as_root(self, path):
         try:
