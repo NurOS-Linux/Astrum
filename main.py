@@ -3,7 +3,6 @@
 import sys
 import os
 import shutil
-import subprocess
 from datetime import datetime
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
@@ -14,7 +13,6 @@ VERSION = "1.0.0"
 class AstrumFM(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.clipboard = []
         self.init_ui()
         self.setup_styles()
         
