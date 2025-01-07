@@ -8,20 +8,42 @@ from datetime import datetime
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLineEdit, QListWidget, QLabel, QListView, QMenu, QMessageBox, QDialog, QPushButton,
-    QGridLayout, QInputDialog, QListWidgetItem, QFileSystemModel
+    QGridLayout, QInputDialog, QListWidgetItem, QFileSystemModel, QTextEdit, QToolBar, QAction, QMenuBar
 )
 from PyQt5.QtCore import QDir, Qt, QSize
+from PyQt5.QtGui import QIcon
 
 class AstrumFM(QMainWindow):
     def __init__(self):
         super().__init__()
         self.init_ui()
         self.setup_styles()
-        
+
     def init_ui(self):
         self.setWindowTitle('Astrum')
         self.setGeometry(100, 100, 1200, 700)
 
+        # Setup menu bar
+        menubar = self.menuBar()
+        file_menu = menubar.addMenu('Файл')
+        view_menu = menubar.addMenu('Вид')
+        about_menu = menubar.addMenu('О приложении')
+
+        # Setup toolbar
+        toolbar = QToolBar()
+        self.addToolBar(toolbar)
+
+        back_action = QAction(QIcon('icons/back.png'), 'Назад', self)
+        forward_action = QAction(QIcon('icons/forward.png'), 'Вперед', self)
+        search_action = QAction(QIcon('icons/search.png'), 'Строка поиска', self)
+        path_action = QAction(QIcon('icons/path.png'), 'Ввод директории', self)
+
+        toolbar.addAction(back_action)
+        toolbar.addAction(forward_action)
+        toolbar.addAction(search_action)
+        toolbar.addAction(path_action)
+
+        # Main widget
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         layout = QHBoxLayout(main_widget)
@@ -29,7 +51,7 @@ class AstrumFM(QMainWindow):
         # Left panel
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
-        left_widget.setFixedWidth(200)
+        left_widget.setFixedWidth(250)
         
         # Quick access
         self.quick_access = QListWidget()
@@ -68,7 +90,7 @@ class AstrumFM(QMainWindow):
         self.files.setModel(self.fs_model)
         self.files.setRootIndex(self.fs_model.index(QDir.homePath()))
         self.files.setViewMode(QListView.IconMode)
-        self.files.setGridSize(QSize(100, 100))
+        self.files.setGridSize(QSize(150, 150))
         self.files.setContextMenuPolicy(Qt.CustomContextMenu)
         self.files.customContextMenuRequested.connect(self.show_context_menu)
         right_layout.addWidget(self.files)
@@ -80,6 +102,9 @@ class AstrumFM(QMainWindow):
         self.quick_access.itemClicked.connect(self.on_quick_access_clicked)
         self.devices.itemClicked.connect(self.on_device_clicked)
         self.bookmarks.itemClicked.connect(self.on_bookmark_clicked)
+
+        # Show upcoming features
+        self.show_upcoming_features()
 
     def setup_quick_access(self):
         locations = {
@@ -130,14 +155,27 @@ class AstrumFM(QMainWindow):
         
         if os.path.exists(current):
             menu.addAction("📁 New Folder", self.create_folder)
+            menu.addAction("📄 New File", self.create_file)
             menu.addAction("🔖 Add Bookmark", lambda: self.add_bookmark(current))
             menu.addAction("🗑️ Delete", self.delete_selected)
+            menu.addAction("✏️ Open in Editor", lambda: self.open_in_editor(current))
+            menu.addMenu(self.create_open_with_menu(current))
             menu.addAction("ℹ️ Properties", self.show_properties)
             
-            if not os.access(current, os.W_OK):
-                menu.addAction("🔒 Open as Root", lambda: self.open_as_root(current))
-        
         menu.exec(self.sender().mapToGlobal(pos))
+
+    def create_open_with_menu(self, current):
+        open_with_menu = QMenu("📂 Open With")
+        apps = ["gedit", "code", "nano", "vim"]
+        for app in apps:
+            open_with_menu.addAction(app, lambda app=app: self.open_with(current, app))
+        return open_with_menu
+
+    def open_with(self, path, app):
+        try:
+            subprocess.Popen([app, path])
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
 
     def navigate_to_path(self):
         path = self.path_input.text()
@@ -149,20 +187,24 @@ class AstrumFM(QMainWindow):
         if os.path.isdir(path):
             self.navigate_to(path)
         else:
-            try:
-                subprocess.Popen(['xdg-open', path])
-            except Exception as e:
-                QMessageBox.critical(self, "Error", str(e))
+            self.open_with(path, "xdg-open")
 
     def create_folder(self):
         name, ok = QInputDialog.getText(self, "New Folder", "Name:")
         if ok and name:
             path = os.path.join(self.fs_model.filePath(self.files.rootIndex()), name)
             try:
-                if not os.access(path, os.W_OK):
-                    self.run_as_root(['mkdir', path])
-                else:
-                    os.makedirs(path)
+                os.makedirs(path)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", str(e))
+
+    def create_file(self):
+        name, ok = QInputDialog.getText(self, "New File", "Name:")
+        if ok and name:
+            path = os.path.join(self.fs_model.filePath(self.files.rootIndex()), name)
+            try:
+                with open(path, 'w') as f:
+                    pass
             except Exception as e:
                 QMessageBox.critical(self, "Error", str(e))
 
@@ -190,20 +232,7 @@ class AstrumFM(QMainWindow):
             self.files.setRootIndex(self.fs_model.index(path))
             self.path_input.setText(path)
         else:
-            reply = QMessageBox.question(
-                self, 
-                "Permission Denied",
-                f"Access to {path} is denied.\nWould you like to open it as root?",
-                QMessageBox.Yes | QMessageBox.No
-            )
-            if reply == QMessageBox.Yes:
-                self.open_as_root(path)
-
-    def open_as_root(self, path):
-        try:
-            self.run_as_root(['xdg-open', path])
-        except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            QMessageBox.critical(self, "Error", f"Access to {path} is denied.")
 
     def delete_selected(self):
         selected = self.files.selectedIndexes()
@@ -223,13 +252,10 @@ class AstrumFM(QMainWindow):
         if reply == QMessageBox.Yes:
             for file_path in files:
                 try:
-                    if not os.access(file_path, os.W_OK):
-                        self.run_as_root(['rm', '-rf', file_path])
+                    if os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
                     else:
-                        if os.path.isdir(file_path):
-                            shutil.rmtree(file_path)
-                        else:
-                            os.remove(file_path)
+                        os.remove(file_path)
                 except Exception as e:
                     QMessageBox.critical(self, "Error", f"Could not delete {file_path}\n{str(e)}")
 
@@ -303,42 +329,41 @@ class AstrumFM(QMainWindow):
         layout.addWidget(btn)
         
         dialog.setStyleSheet("""
-            QDialog { background-color: #ffffff; color: #000000; border-radius: 12px; }
-            QLabel { color: #000000; padding: 5px; }
-            QPushButton { background-color: #f0f0f0; color: #000000; border: 1px solid #d0d0d0; border-radius: 6px; padding: 5px 16px; }
-            QPushButton:hover { background-color: #e0e0e0; border-color: #c0c0c0; }
+            QDialog { background-color: #0d1117; color: #c9d1d9; border-radius: 12px; }
+            QLabel { color: #c9d1d9; padding: 5px; }
+            QPushButton { background-color: #21262d; color: #c9d1d9; border: 1px solid #30363d; border-radius: 6px; padding: 5px 16px; }
+            QPushButton:hover { background-color: #30363d; border-color: #8b949e; }
         """)
         
         dialog.exec()
 
-    def run_as_root(self, command):
-        try:
-            subprocess.run(['sudo'] + command, check=True)
-        except subprocess.CalledProcessError as e:
-            QMessageBox.critical(self, "Error", f"Command failed: {e}")
+    def open_in_editor(self, path):
+        if os.path.isfile(path):
+            editor = TextEditor(path)
+            editor.exec()
 
     def setup_styles(self):
         radius = 12
         self.setStyleSheet(f"""
         QMainWindow {{
-            background-color: #ffffff;
-            color: #000000;
+            background-color: #0d1117;
+            color: #c9d1d9;
             border-radius: {radius}px;
         }}
         QLineEdit {{
-            background-color: #f0f0f0;
-            border: 1px solid #d0d0d0;
+            background-color: #161b22;
+            border: 1px solid #30363d;
             border-radius: {radius}px;
-            color: #000000;
+            color: #c9d1d9;
             padding: 8px;
             font-size: 14px;
             margin: 5px;
         }}
         QListWidget {{
-            background-color: #f0f0f0;
-            border: 1px solid #d0d0d0;
+            background-color: #161b22;
+            border: 1px solid #30363d;
             border-radius: {radius}px;
-            color: #000000;
+            color: #c9d1d9;
             font-size: 14px;
             padding: 5px;
         }}
@@ -348,14 +373,14 @@ class AstrumFM(QMainWindow):
             margin: 2px;
         }}
         QListWidget::item:selected {{
-            background-color: #007aff;
+            background-color: #1f6feb;
             color: white;
         }}
         QTreeView, QListView {{
-            background-color: #ffffff;
-            border: 1px solid #d0d0d0;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
             border-radius: {radius}px;
-            color: #000000;
+            color: #c9d1d9;
             padding: 5px;
         }}
         QTreeView::item, QListView::item {{
@@ -363,14 +388,14 @@ class AstrumFM(QMainWindow):
             margin: 2px;
         }}
         QTreeView::item:selected, QListView::item:selected {{
-            background-color: #007aff;
+            background-color: #1f6feb;
             color: white;
         }}
         QMenu {{
-            background-color: #ffffff;
-            border: 1px solid #d0d0d0;
+            background-color: #161b22;
+            border: 1px solid #30363d;
             border-radius: {radius}px;
-            color: #000000;
+            color: #c9d1d9;
             padding: 5px;
         }}
         QMenu::item {{
@@ -378,22 +403,67 @@ class AstrumFM(QMainWindow):
             border-radius: {radius-4}px;
         }}
         QMenu::item:selected {{
-            background-color: #007aff;
+            background-color: #1f6feb;
         }}
         QScrollBar:vertical {{
-            background-color: #ffffff;
+            background-color: #0d1117;
             width: 12px;
             border-radius: {radius-4}px;
         }}
         QScrollBar::handle:vertical {{
-            background-color: #d0d0d0;
+            background-color: #30363d;
             border-radius: {radius-4}px;
             min-height: 20px;
         }}
         QScrollBar::handle:vertical:hover {{
-            background-color: #007aff;
+            background-color: #1f6feb;
         }}
         """)
+
+    def show_upcoming_features(self):
+        QMessageBox.information(self, "Upcoming Features", 
+            "In the next version, we plan to add the following features:\n\n"
+            "1. Support for Dark Theme.\n"
+            "2. Performance Optimization.\n"
+            "3. Advanced Search Capabilities.\n"
+            "4. Support for Additional Languages.\n"
+            "5. Improved Navigation.\n"
+            "6. Integration with Cloud Services.\n"
+            "7. Expanded User Settings.\n"
+            "8. Enhanced Security and Privacy.")
+
+class TextEditor(QDialog):
+    def __init__(self, file_path):
+        super().__init__()
+        self.setWindowTitle("Text Editor")
+        self.setGeometry(100, 100, 800, 600)
+        self.file_path = file_path
+        
+        layout = QVBoxLayout()
+        self.editor = QTextEdit()
+        layout.addWidget(self.editor)
+        
+        btn_save = QPushButton("Save")
+        btn_save.clicked.connect(self.save_file)
+        layout.addWidget(btn_save)
+        
+        self.setLayout(layout)
+        self.load_file()
+    
+    def load_file(self):
+        try:
+            with open(self.file_path, 'r') as file:
+                self.editor.setPlainText(file.read())
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+    
+    def save_file(self):
+        try:
+            with open(self.file_path, 'w') as file:
+                file.write(self.editor.toPlainText())
+            QMessageBox.information(self, "Success", "File saved successfully")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
 
 def main():
     app = QApplication(sys.argv)
