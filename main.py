@@ -3,12 +3,14 @@
 import sys
 import os
 import shutil
+import subprocess
 from datetime import datetime
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
-
-VERSION = "1.0.0"
+from PyQt5.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QLineEdit, QListWidget, QLabel, QListView, QMenu, QMessageBox, QDialog, QPushButton,
+    QGridLayout, QInputDialog, QListWidgetItem, QFileSystemModel
+)
+from PyQt5.QtCore import QDir, Qt, QSize
 
 class AstrumFM(QMainWindow):
     def __init__(self):
@@ -17,7 +19,7 @@ class AstrumFM(QMainWindow):
         self.setup_styles()
         
     def init_ui(self):
-        self.setWindowTitle(f'Astrum {VERSION}')
+        self.setWindowTitle('Astrum')
         self.setGeometry(100, 100, 1200, 700)
 
         main_widget = QWidget()
@@ -65,9 +67,9 @@ class AstrumFM(QMainWindow):
         self.fs_model.setRootPath(QDir.homePath())
         self.files.setModel(self.fs_model)
         self.files.setRootIndex(self.fs_model.index(QDir.homePath()))
-        self.files.setViewMode(QListView.ViewMode.IconMode)
+        self.files.setViewMode(QListView.IconMode)
         self.files.setGridSize(QSize(100, 100))
-        self.files.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.files.setContextMenuPolicy(Qt.CustomContextMenu)
         self.files.customContextMenuRequested.connect(self.show_context_menu)
         right_layout.addWidget(self.files)
         
@@ -92,7 +94,7 @@ class AstrumFM(QMainWindow):
         for name, path in locations.items():
             if os.path.exists(path):
                 item = QListWidgetItem(name)
-                item.setData(Qt.ItemDataRole.UserRole, path)
+                item.setData(Qt.UserRole, path)
                 self.quick_access.addItem(item)
 
     def setup_devices(self):
@@ -103,7 +105,7 @@ class AstrumFM(QMainWindow):
                         dev, mount, *_ = line.split()
                         name = f"💾 {os.path.basename(mount)}"
                         item = QListWidgetItem(name)
-                        item.setData(Qt.ItemDataRole.UserRole, mount)
+                        item.setData(Qt.UserRole, mount)
                         self.devices.addItem(item)
         except: pass
 
@@ -118,7 +120,7 @@ class AstrumFM(QMainWindow):
                         name, path = line.strip().split('|')
                         if os.path.exists(path):
                             item = QListWidgetItem(f"🔖 {name}")
-                            item.setData(Qt.ItemDataRole.UserRole, path)
+                            item.setData(Qt.UserRole, path)
                             self.bookmarks.addItem(item)
         except: pass
 
@@ -157,7 +159,10 @@ class AstrumFM(QMainWindow):
         if ok and name:
             path = os.path.join(self.fs_model.filePath(self.files.rootIndex()), name)
             try:
-                os.makedirs(path)
+                if not os.access(path, os.W_OK):
+                    self.run_as_root(['mkdir', path])
+                else:
+                    os.makedirs(path)
             except Exception as e:
                 QMessageBox.critical(self, "Error", str(e))
 
@@ -165,20 +170,20 @@ class AstrumFM(QMainWindow):
         name, ok = QInputDialog.getText(self, "Add Bookmark", "Name:")
         if ok and name:
             item = QListWidgetItem(f"🔖 {name}")
-            item.setData(Qt.ItemDataRole.UserRole, path)
+            item.setData(Qt.UserRole, path)
             self.bookmarks.addItem(item)
             
             with open(self.bookmarks_file, 'a') as f:
                 f.write(f"{name}|{path}\n")
 
     def on_quick_access_clicked(self, item):
-        self.navigate_to(item.data(Qt.ItemDataRole.UserRole))
+        self.navigate_to(item.data(Qt.UserRole))
 
     def on_device_clicked(self, item):
-        self.navigate_to(item.data(Qt.ItemDataRole.UserRole))
+        self.navigate_to(item.data(Qt.UserRole))
 
     def on_bookmark_clicked(self, item):
-        self.navigate_to(item.data(Qt.ItemDataRole.UserRole))
+        self.navigate_to(item.data(Qt.UserRole))
 
     def navigate_to(self, path):
         if os.access(path, os.R_OK):
@@ -189,14 +194,14 @@ class AstrumFM(QMainWindow):
                 self, 
                 "Permission Denied",
                 f"Access to {path} is denied.\nWould you like to open it as root?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                QMessageBox.Yes | QMessageBox.No
             )
-            if reply == QMessageBox.StandardButton.Yes:
+            if reply == QMessageBox.Yes:
                 self.open_as_root(path)
 
     def open_as_root(self, path):
         try:
-            subprocess.Popen(['pkexec', 'xdg-open', path])
+            self.run_as_root(['xdg-open', path])
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
 
@@ -212,16 +217,19 @@ class AstrumFM(QMainWindow):
             self, 
             "Confirm Delete",
             msg,
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            QMessageBox.Yes | QMessageBox.No
         )
         
-        if reply == QMessageBox.StandardButton.Yes:
+        if reply == QMessageBox.Yes:
             for file_path in files:
                 try:
-                    if os.path.isdir(file_path):
-                        shutil.rmtree(file_path)
+                    if not os.access(file_path, os.W_OK):
+                        self.run_as_root(['rm', '-rf', file_path])
                     else:
-                        os.remove(file_path)
+                        if os.path.isdir(file_path):
+                            shutil.rmtree(file_path)
+                        else:
+                            os.remove(file_path)
                 except Exception as e:
                     QMessageBox.critical(self, "Error", f"Could not delete {file_path}\n{str(e)}")
 
@@ -295,36 +303,42 @@ class AstrumFM(QMainWindow):
         layout.addWidget(btn)
         
         dialog.setStyleSheet("""
-            QDialog { background-color: #0d1117; color: #c9d1d9; border-radius: 12px; }
-            QLabel { color: #c9d1d9; padding: 5px; }
-            QPushButton { background-color: #21262d; color: #c9d1d9; border: 1px solid #30363d; border-radius: 6px; padding: 5px 16px; }
-            QPushButton:hover { background-color: #30363d; border-color: #8b949e; }
+            QDialog { background-color: #ffffff; color: #000000; border-radius: 12px; }
+            QLabel { color: #000000; padding: 5px; }
+            QPushButton { background-color: #f0f0f0; color: #000000; border: 1px solid #d0d0d0; border-radius: 6px; padding: 5px 16px; }
+            QPushButton:hover { background-color: #e0e0e0; border-color: #c0c0c0; }
         """)
         
         dialog.exec()
+
+    def run_as_root(self, command):
+        try:
+            subprocess.run(['sudo'] + command, check=True)
+        except subprocess.CalledProcessError as e:
+            QMessageBox.critical(self, "Error", f"Command failed: {e}")
 
     def setup_styles(self):
         radius = 12
         self.setStyleSheet(f"""
         QMainWindow {{
-            background-color: #0d1117;
-            color: #c9d1d9;
+            background-color: #ffffff;
+            color: #000000;
             border-radius: {radius}px;
         }}
         QLineEdit {{
-            background-color: #161b22;
-            border: 1px solid #30363d;
+            background-color: #f0f0f0;
+            border: 1px solid #d0d0d0;
             border-radius: {radius}px;
-            color: #c9d1d9;
+            color: #000000;
             padding: 8px;
             font-size: 14px;
             margin: 5px;
         }}
         QListWidget {{
-            background-color: #161b22;
-            border: 1px solid #30363d;
+            background-color: #f0f0f0;
+            border: 1px solid #d0d0d0;
             border-radius: {radius}px;
-            color: #c9d1d9;
+            color: #000000;
             font-size: 14px;
             padding: 5px;
         }}
@@ -334,14 +348,14 @@ class AstrumFM(QMainWindow):
             margin: 2px;
         }}
         QListWidget::item:selected {{
-            background-color: #1f6feb;
+            background-color: #007aff;
             color: white;
         }}
         QTreeView, QListView {{
-            background-color: #0d1117;
-            border: 1px solid #30363d;
+            background-color: #ffffff;
+            border: 1px solid #d0d0d0;
             border-radius: {radius}px;
-            color: #c9d1d9;
+            color: #000000;
             padding: 5px;
         }}
         QTreeView::item, QListView::item {{
@@ -349,14 +363,14 @@ class AstrumFM(QMainWindow):
             margin: 2px;
         }}
         QTreeView::item:selected, QListView::item:selected {{
-            background-color: #1f6feb;
+            background-color: #007aff;
             color: white;
         }}
         QMenu {{
-            background-color: #161b22;
-            border: 1px solid #30363d;
+            background-color: #ffffff;
+            border: 1px solid #d0d0d0;
             border-radius: {radius}px;
-            color: #c9d1d9;
+            color: #000000;
             padding: 5px;
         }}
         QMenu::item {{
@@ -364,20 +378,20 @@ class AstrumFM(QMainWindow):
             border-radius: {radius-4}px;
         }}
         QMenu::item:selected {{
-            background-color: #1f6feb;
+            background-color: #007aff;
         }}
         QScrollBar:vertical {{
-            background-color: #0d1117;
+            background-color: #ffffff;
             width: 12px;
             border-radius: {radius-4}px;
         }}
         QScrollBar::handle:vertical {{
-            background-color: #30363d;
+            background-color: #d0d0d0;
             border-radius: {radius-4}px;
             min-height: 20px;
         }}
         QScrollBar::handle:vertical:hover {{
-            background-color: #1f6feb;
+            background-color: #007aff;
         }}
         """)
 
@@ -386,7 +400,7 @@ def main():
     app.setApplicationName('kz.delta.astrum')
     window = AstrumFM()
     window.show()
-    sys.exit(app.exec())
+    sys.exit(app.exec_())
 
 if __name__ == '__main__':
     main()
