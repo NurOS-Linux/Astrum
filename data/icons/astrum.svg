@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" 
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="128" height="128" viewBox="0 0 128 128">
+  
+  <!-- Определения градиентов -->
+  <defs>
+    <!-- Основной темный градиент -->
+    <linearGradient id="darkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E1E1E" />
+      <stop offset="100%" style="stop-color:#121212" />
+    </linearGradient>
+    
+    <!-- Градиент для акцентного цвета -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#BB86FC" />
+      <stop offset="100%" style="stop-color:#9966FF" />
+    </linearGradient>
+    
+    <!-- Градиент для переднего плана -->
+    <linearGradient id="frontGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#03DAC6" />
+      <stop offset="100%" style="stop-color:#018786" />
+    </linearGradient>
+    
+    <!-- Фильтр тени -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Фон (скругленный квадрат) -->
+  <rect x="8" y="8" width="112" height="112" rx="24" ry="24"
+        fill="url(#darkGradient)" filter="url(#shadow)" />
+  
+  <!-- Абстрактное представление файлового менеджера -->
+  <!-- Левая панель (bookmarks) -->
+  <rect x="20" y="28" width="24" height="72" rx="4" ry="4"
+        fill="#2D2D2D" opacity="0.7" />
+  
+  <!-- Левая панель элементы -->
+  <rect x="24" y="36" width="16" height="4" rx="2" ry="2"
+        fill="url(#accentGradient)" opacity="0.8" />
+  <rect x="24" y="48" width="16" height="4" rx="2" ry="2"
+        fill="white" opacity="0.5" />
+  <rect x="24" y="60" width="16" height="4" rx="2" ry="2"
+        fill="white" opacity="0.5" />
+  <rect x="24" y="72" width="16" height="4" rx="2" ry="2"
+        fill="white" opacity="0.5" />
+  
+  <!-- Правая панель (файлы) -->
+  <rect x="52" y="28" width="56" height="72" rx="4" ry="4"
+        fill="#2D2D2D" opacity="0.6" />
+  
+  <!-- Верхняя панель (путь) -->
+  <rect x="20" y="18" width="88" height="6" rx="3" ry="3"
+        fill="#2D2D2D" opacity="0.7" />
+  
+  <!-- Иконки файлов (абстрактное представление) -->
+  <!-- Первый ряд -->
+  <g transform="translate(60, 40)">
+    <rect x="-8" y="-8" width="16" height="16" rx="2" ry="2"
+          fill="url(#frontGradient)" opacity="0.8" />
+    <rect x="-5" y="-2" width="10" height="2" rx="1" ry="1"
+          fill="white" opacity="0.8" />
+    <rect x="-5" y="2" width="10" height="2" rx="1" ry="1"
+          fill="white" opacity="0.6" />
+  </g>
+  
+  <g transform="translate(84, 40)">
+    <rect x="-8" y="-8" width="16" height="16" rx="2" ry="2"
+          fill="url(#accentGradient)" opacity="0.8" />
+    <rect x="-5" y="-2" width="10" height="2" rx="1" ry="1"
+          fill="white" opacity="0.8" />
+    <rect x="-5" y="2" width="10" height="2" rx="1" ry="1"
+          fill="white" opacity="0.6" />
+  </g>
+  
+  <!-- Второй ряд -->
+  <g transform="translate(60, 64)">
+    <rect x="-8" y="-8" width="16" height="16" rx="2" ry="2"
+          fill="url(#accentGradient)" opacity="0.8" />
+    <rect x="-5" y="-2" width="10" height="2" rx="1" ry="1"
+          fill="white" opacity="0.8" />
+    <rect x="-5" y="2" width="10" height="2" rx="1" ry="1"
+          fill="white" opacity="0.6" />
+  </g>
+  
+  <g transform="translate(84, 64)">
+    <rect x="-8" y="-8" width="16" height="16" rx="2" ry="2"
+          fill="url(#frontGradient)" opacity="0.8" />
+    <rect x="-5" y="-2" width="10" height="2" rx="1" ry="1"
+          fill="white" opacity="0.8" />
+    <rect x="-5" y="2" width="10" height="2" rx="1" ry="1"
+          fill="white" opacity="0.6" />
+  </g>
+  
+  <!-- Третий ряд -->
+  <g transform="translate(60, 88)">
+    <rect x="-8" y="-8" width="16" height="16" rx="2" ry="2"
+          fill="url(#frontGradient)" opacity="0.7" />
+    <rect x="-5" y="-2" width="10" height="2" rx="1" ry="1"
+          fill="white" opacity="0.8" />
+    <rect x="-5" y="2" width="10" height="2" rx="1" ry="1"
+          fill="white" opacity="0.6" />
+  </g>
+  
+  <!-- Узор "A" для Astrum - минималистичный -->
+  <path d="M 36 94 L 42 76 L 48 94 L 45 94 L 42 84 L 39 94 Z" 
+        fill="url(#accentGradient)" opacity="0.9" />
+  
+  <!-- Маленькие звезды (намек на "Astrum" - "звезда" на латыни) -->
+  <circle cx="30" cy="68" r="1.5" fill="#FFFFFF" opacity="0.7" />
+  <circle cx="38" cy="62" r="1" fill="#FFFFFF" opacity="0.5" />
+  <circle cx="44" cy="70" r="1.2" fill="#FFFFFF" opacity="0.6" />
+  <circle cx="36" cy="56" r="0.8" fill="#FFFFFF" opacity="0.4" />
+  <circle cx="42" cy="52" r="1.3" fill="#FFFFFF" opacity="0.7" />
+</svg>
