@@ -1,0 +1,70 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Astrum package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Astrum 0.0.1\n"
+"Report-Msgid-Bugs-To: anmitalidev@nuros.org\n"
+"POT-Creation-Date: 2026-02-09 11:58+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: kk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: data/org.aetherde.Astrum.desktop.in:2
+msgid "Astrum"
+msgstr ""
+
+#: data/org.aetherde.Astrum.desktop.in:3
+msgid "File Manager for AetherDE"
+msgstr ""
+
+#: data/org.aetherde.Astrum.desktop.in:9
+msgid "files;folders;file manager;"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:9
+msgid "Window width"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:14
+msgid "Window height"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:19
+msgid "Window maximized"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:24
+msgid "File view mode"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:25
+msgid "Either 'list' or 'grid'"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:30
+msgid "Show hidden files"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:35
+msgid "Sort column"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:36
+msgid "One of 'name', 'size', 'modified', 'type'"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:41
+msgid "Sort in ascending order"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:46
+msgid "Custom bookmarks"
+msgstr ""
