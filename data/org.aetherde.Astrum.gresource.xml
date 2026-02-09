@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Copyright (C) 2026 AnmiTaliDev <anmitalidev@nuros.org> -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<gresources>
+  <gresource prefix="/org/aetherde/Astrum">
+    <!-- Temporary: icon removed until designers create a new one -->
+    <!-- <file preprocess="xml-stripblanks">icons/org.aetherde.Astrum.svg</file> -->
+  </gresource>
+</gresources>

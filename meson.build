@@ -1,54 +1,48 @@
-project('astrum', 'cpp',
-  version : '0.1.0',
-  default_options : [
-    'warning_level=3',
-    'cpp_std=c++17',
-    'buildtype=release'
-  ]
+# Copyright (C) 2026 AnmiTaliDev <anmitalidev@nuros.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+project('astrum', 'vala', 'c',
+  version: '0.0.1',
+  license: 'GPL-3.0-or-later',
+  meson_version: '>= 0.62.0',
+  default_options: [
+    'warning_level=2',
+    'werror=false',
+  ],
 )
 
-# Компилятор и флаги
-cpp = meson.get_compiler('cpp')
-if cpp.get_id() == 'gcc' or cpp.get_id() == 'clang'
-  add_project_arguments('-Wno-deprecated-declarations', language : 'cpp')
-endif
+app_id = 'org.aetherde.Astrum'
+app_name = 'Astrum'
 
-# Qt6 зависимости
-qt6 = import('qt6')
-qt_deps = dependency('qt6', modules : ['Core', 'Gui', 'Widgets'])
+i18n = import('i18n')
+gnome = import('gnome')
 
-# Опционально: проверка X11 (может потребоваться для некоторых дистрибутивов)
-x11_dep = dependency('x11', required : false)
-if x11_dep.found()
-  qt_deps = [qt_deps, x11_dep]
-endif
+# Dependencies
+glib_dep = dependency('glib-2.0', version: '>= 2.76')
+gobject_dep = dependency('gobject-2.0')
+gio_dep = dependency('gio-2.0')
+gtk_dep = dependency('gtk4', version: '>= 4.12')
+adw_dep = dependency('libadwaita-1', version: '>= 1.4')
 
-# MOC для обработки Q_OBJECT
-moc_files = qt6.preprocess(
-  moc_headers : ['astrum.hpp'],
-  dependencies : qt_deps
+conf_data = configuration_data()
+conf_data.set_quoted('APP_ID', app_id)
+conf_data.set_quoted('APP_NAME', app_name)
+conf_data.set_quoted('APP_VERSION', meson.project_version())
+conf_data.set_quoted('GETTEXT_PACKAGE', meson.project_name())
+conf_data.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
+
+config_file = configure_file(
+  input: 'src/config.vala.in',
+  output: 'config.vala',
+  configuration: conf_data,
 )
 
-# Исходные файлы
-src = [
-  'main.cpp',
-  moc_files
-]
+subdir('data')
+subdir('src')
+subdir('po')
 
-# Создание исполняемого файла
-astrum_exe = executable(
-  'astrum',
-  src,
-  dependencies : qt_deps,
-  install : true
+gnome.post_install(
+  glib_compile_schemas: true,
+  gtk_update_icon_cache: true,
+  update_desktop_database: true,
 )
-
-# Создание директорий, если они еще не существуют
-run_command('mkdir', '-p', 'data/icons', check: false)
-
-# Установка файла рабочего стола и иконки
-install_data('data/astrum.desktop', install_dir : get_option('datadir') / 'applications')
-install_data('data/icons/astrum.svg', install_dir : get_option('datadir') / 'icons/hicolor/scalable/apps')
-
-# Сообщение о завершении сборки
-message('Astrum File Manager configured successfully')

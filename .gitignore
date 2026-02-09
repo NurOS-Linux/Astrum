@@ -1,0 +1,18 @@
+# Build
+build/
+builddir/
+_build/
+
+# Editor
+*.swp
+*~
+.vscode/
+.idea/
+
+# Compiled
+*.o
+*.so
+
+# Generated
+*.gresource
+*.gschema.valid

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (C) 2026 AnmiTaliDev <anmitalidev@nuros.org> -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<schemalist gettext-domain="astrum">
+  <schema id="org.aetherde.Astrum" path="/org/aetherde/Astrum/">
+
+    <key name="window-width" type="i">
+      <default>900</default>
+      <summary>Window width</summary>
+    </key>
+
+    <key name="window-height" type="i">
+      <default>600</default>
+      <summary>Window height</summary>
+    </key>
+
+    <key name="window-maximized" type="b">
+      <default>false</default>
+      <summary>Window maximized</summary>
+    </key>
+
+    <key name="view-mode" type="s">
+      <default>'list'</default>
+      <summary>File view mode</summary>
+      <description>Either 'list' or 'grid'</description>
+    </key>
+
+    <key name="show-hidden-files" type="b">
+      <default>false</default>
+      <summary>Show hidden files</summary>
+    </key>
+
+    <key name="sort-by" type="s">
+      <default>'name'</default>
+      <summary>Sort column</summary>
+      <description>One of 'name', 'size', 'modified', 'type'</description>
+    </key>
+
+    <key name="sort-ascending" type="b">
+      <default>true</default>
+      <summary>Sort in ascending order</summary>
+    </key>
+
+    <key name="bookmarks" type="as">
+      <default>[]</default>
+      <summary>Custom bookmarks</summary>
+    </key>
+
+  </schema>
+</schemalist>

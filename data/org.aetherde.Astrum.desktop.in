@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Astrum
+Comment=File Manager for AetherDE
+Exec=astrum %U
+Icon=system-file-manager
+Terminal=false
+Type=Application
+Categories=System;FileTools;FileManager;GTK;
+Keywords=files;folders;file manager;
+MimeType=inode/directory;
+StartupNotify=true
