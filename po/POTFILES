@@ -1,2 +1,12 @@
 data/org.aetherde.Astrum.desktop.in
 data/org.aetherde.Astrum.gschema.xml
+src/application.vala
+src/clipboard-manager.vala
+src/file-item.vala
+src/file-manager.vala
+src/file-view.vala
+src/path-bar.vala
+src/properties-dialog.vala
+src/sidebar.vala
+src/utils.vala
+src/window.vala
