@@ -41,7 +41,7 @@ meson compile -C build
 ### Run (development)
 
 ```bash
-./run.sh
+GSETTINGS_SCHEMA_DIR=./data ./build/src/astrum 
 ```
 
 ### Install
