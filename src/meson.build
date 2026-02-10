@@ -11,6 +11,7 @@ astrum_sources = files(
   'path-bar.vala',
   'clipboard-manager.vala',
   'properties-dialog.vala',
+  'preferences-dialog.vala',
   'utils.vala',
 )
 

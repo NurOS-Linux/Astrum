@@ -28,8 +28,8 @@ namespace Astrum.Utils {
     public string get_mime_icon_name (string content_type) {
         var icon = GLib.ContentType.get_icon (content_type);
         if (icon is GLib.ThemedIcon) {
-            unowned string[] names = ((GLib.ThemedIcon) icon).get_names ();
-            if (names.length > 0) return names[0];
+            unowned string[]? names = ((GLib.ThemedIcon) icon).get_names ();
+            if (names != null && names.length > 0) return names[0];
         }
         return "text-x-generic";
     }

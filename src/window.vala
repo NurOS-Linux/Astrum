@@ -193,6 +193,7 @@ namespace Astrum {
                 { "toggle-hidden", on_toggle_hidden },
                 { "add-bookmark", on_add_bookmark },
                 { "open-terminal", on_open_terminal },
+                { "preferences", on_preferences },
             };
             this.add_action_entries (action_entries, this);
         }
@@ -285,6 +286,7 @@ namespace Astrum {
             menu.append_section (null, action_section);
 
             var app_section = new GLib.Menu ();
+            app_section.append ("Preferences", "win.preferences");
             app_section.append ("About Astrum", "app.about");
             menu.append_section (null, app_section);
 
@@ -510,18 +512,39 @@ namespace Astrum {
             var path = file_manager.current_directory?.get_path ();
             if (path == null) return;
 
-            try {
-                var app_info = GLib.AppInfo.create_from_commandline (
-                    "xdg-terminal-exec",
-                    null,
-                    GLib.AppInfoCreateFlags.NONE
-                );
-                var launch_ctx = this.get_display ().get_app_launch_context ();
-                launch_ctx.setenv ("PWD", path);
-                app_info.launch (null, launch_ctx);
-            } catch (GLib.Error e) {
-                file_manager.error_occurred ("Cannot open terminal: %s".printf (e.message));
+            // Try common terminal emulators in order
+            string[] terminals = {
+                "gnome-terminal",
+                "konsole",
+                "xfce4-terminal",
+                "xterm",
+                "alacritty",
+                "kitty",
+                "wezterm",
+            };
+
+            foreach (var terminal in terminals) {
+                try {
+                    var app_info = GLib.AppInfo.create_from_commandline (
+                        terminal,
+                        null,
+                        GLib.AppInfoCreateFlags.NONE
+                    );
+                    var launch_ctx = this.get_display ().get_app_launch_context ();
+                    launch_ctx.setenv ("PWD", path);
+                    app_info.launch (null, launch_ctx);
+                    return;
+                } catch (GLib.Error e) {
+                    continue;
+                }
             }
+
+            file_manager.error_occurred ("No terminal emulator found. Please install gnome-terminal or another terminal.");
+        }
+
+        private void on_preferences () {
+            var dialog = new PreferencesDialog (settings);
+            dialog.present (this);
         }
 
         // UI updates

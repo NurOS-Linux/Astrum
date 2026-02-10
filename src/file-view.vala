@@ -76,8 +76,9 @@ namespace Astrum {
             factory.bind.connect (on_grid_bind);
 
             grid_view = new Gtk.GridView (selection_model, factory) {
-                max_columns = 8,
-                min_columns = 2,
+                max_columns = 12,
+                min_columns = 3,
+                single_click_activate = false,
             };
             grid_view.activate.connect (on_item_activated);
 
@@ -113,7 +114,7 @@ namespace Astrum {
             };
 
             var icon = new Gtk.Image () {
-                icon_size = Gtk.IconSize.NORMAL,
+                pixel_size = settings.get_int ("list-icon-size"),
             };
 
             var name_label = new Gtk.Label (null) {
@@ -170,27 +171,27 @@ namespace Astrum {
         private void on_grid_setup (Gtk.SignalListItemFactory factory, GLib.Object obj) {
             var list_item = (Gtk.ListItem) obj;
 
-            var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 4) {
+            var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 6) {
                 halign = Gtk.Align.CENTER,
-                valign = Gtk.Align.START,
-                margin_start = 8,
-                margin_end = 8,
-                margin_top = 8,
-                margin_bottom = 8,
-                width_request = 96,
+                valign = Gtk.Align.CENTER,
+                margin_start = 4,
+                margin_end = 4,
+                margin_top = 4,
+                margin_bottom = 4,
             };
 
             var icon = new Gtk.Image () {
-                pixel_size = 48,
+                pixel_size = settings.get_int ("grid-icon-size"),
             };
 
             var label = new Gtk.Label (null) {
                 xalign = 0.5f,
                 justify = Gtk.Justification.CENTER,
                 ellipsize = Pango.EllipsizeMode.MIDDLE,
-                max_width_chars = 14,
+                max_width_chars = 12,
                 lines = 2,
                 wrap = true,
+                wrap_mode = Pango.WrapMode.WORD_CHAR,
             };
 
             box.append (icon);

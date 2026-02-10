@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <!-- Copyright (C) 2026 AnmiTaliDev <anmitalidev@nuros.org> -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <schemalist gettext-domain="astrum">
@@ -44,6 +44,20 @@
     <key name="bookmarks" type="as">
       <default>[]</default>
       <summary>Custom bookmarks</summary>
+    </key>
+
+    <key name="list-icon-size" type="i">
+      <default>32</default>
+      <summary>Icon size in list view</summary>
+      <description>Size of icons in pixels for list view (16-64)</description>
+      <range min="16" max="64" />
+    </key>
+
+    <key name="grid-icon-size" type="i">
+      <default>48</default>
+      <summary>Icon size in grid view</summary>
+      <description>Size of icons in pixels for grid view (32-128)</description>
+      <range min="32" max="128" />
     </key>
 
   </schema>
