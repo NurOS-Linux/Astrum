@@ -178,14 +178,13 @@ namespace Astrum {
                 if (b == uri) return;
             }
 
-            string[] new_bookmarks = new string[bookmarks.length + 2];
-            for (int i = 0; i < bookmarks.length; i++) {
-                new_bookmarks[i] = bookmarks[i];
+            var builder = new GLib.VariantBuilder (GLib.VariantType.STRING_ARRAY);
+            foreach (string b in bookmarks) {
+                builder.add ("s", b);
             }
-            new_bookmarks[bookmarks.length] = uri;
-            new_bookmarks[bookmarks.length + 1] = null;
+            builder.add ("s", uri);
 
-            settings.set_strv ("bookmarks", (string[]) new_bookmarks);
+            settings.set_value ("bookmarks", builder.end ());
 
             add_bookmark_row (uri);
         }

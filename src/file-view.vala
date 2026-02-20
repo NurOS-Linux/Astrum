@@ -17,7 +17,7 @@ namespace Astrum {
         public signal void selection_changed ();
         public signal void context_menu_requested (double x, double y);
 
-        public FileView (GLib.ListStore model, GLib.Settings settings) {
+        public FileView (GLib.ListModel model, GLib.Settings settings) {
             Object (orientation: Gtk.Orientation.VERTICAL, spacing: 0);
 
             this.settings = settings;

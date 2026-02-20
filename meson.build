@@ -17,6 +17,18 @@ app_name = 'Astrum'
 i18n = import('i18n')
 gnome = import('gnome')
 
+# Suppress warnings from Vala-generated C code
+add_project_arguments([
+  '-std=gnu11',
+  '-Wno-unused-parameter',
+  '-Wno-unused-variable',
+  '-Wno-unused-but-set-variable',
+  '-Wno-unused-function',
+  '-Wno-cast-function-type',
+  '-Wno-discarded-qualifiers',
+  '-Wno-incompatible-pointer-types',
+], language: 'c')
+
 # Dependencies
 glib_dep = dependency('glib-2.0', version: '>= 2.76')
 gobject_dep = dependency('gobject-2.0')

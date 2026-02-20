@@ -6,12 +6,12 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Astrum 0.0.1\n"
-"Report-Msgid-Bugs-To: anmitalidev@nuros.org\n"
-"POT-Creation-Date: 2026-02-09 11:58+0500\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-20 11:13+0500\n"
 "PO-Revision-Date: 2026-02-09 12:28+0000\n"
 "Last-Translator: AnmiTaliDev <anmitali198@gmail.com>\n"
-"Language-Team: Russian <https://hosted.weblate.org/projects/nuros/astrum/ru/>"
-"\n"
+"Language-Team: Russian <https://hosted.weblate.org/projects/nuros/astrum/ru/"
+">\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -70,4 +70,20 @@ msgstr ""
 
 #: data/org.aetherde.Astrum.gschema.xml:46
 msgid "Custom bookmarks"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:51
+msgid "Icon size in list view"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:52
+msgid "Size of icons in pixels for list view (16-64)"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:58
+msgid "Icon size in grid view"
+msgstr ""
+
+#: data/org.aetherde.Astrum.gschema.xml:59
+msgid "Size of icons in pixels for grid view (32-128)"
 msgstr ""

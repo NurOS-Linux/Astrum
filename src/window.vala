@@ -11,6 +11,8 @@ namespace Astrum {
         private PathBar path_bar;
         private FileView file_view;
         private Adw.HeaderBar header_bar;
+        private Gtk.SearchBar search_bar;
+        private Gtk.SearchEntry search_entry;
         private Gtk.Label status_label;
         private Adw.ToastOverlay toast_overlay;
 
@@ -112,6 +114,13 @@ namespace Astrum {
             view_toggle.append (grid_button);
             header_bar.pack_end (view_toggle);
 
+            // Search button
+            var search_button = new Gtk.ToggleButton () {
+                icon_name = "system-search-symbolic",
+                tooltip_text = "Search",
+            };
+            header_bar.pack_end (search_button);
+
             // Menu button
             var menu_button = new Gtk.MenuButton () {
                 icon_name = "open-menu-symbolic",
@@ -120,11 +129,37 @@ namespace Astrum {
             };
             header_bar.pack_end (menu_button);
 
+            // Search bar
+            search_entry = new Gtk.SearchEntry () {
+                hexpand = true,
+                placeholder_text = "Search in current folder…",
+            };
+            search_bar = new Gtk.SearchBar () {
+                child = search_entry,
+                show_close_button = true,
+            };
+            search_bar.connect_entry (search_entry);
+            search_button.bind_property ("active", search_bar, "search-mode-enabled",
+                GLib.BindingFlags.BIDIRECTIONAL | GLib.BindingFlags.SYNC_CREATE);
+
+            search_entry.search_changed.connect (() => {
+                file_manager.set_search_query (search_entry.text);
+                update_status ();
+            });
+
+            search_bar.notify["search-mode-enabled"].connect (() => {
+                if (!search_bar.search_mode_enabled) {
+                    search_entry.text = "";
+                    file_manager.set_search_query ("");
+                    update_status ();
+                }
+            });
+
             // Sidebar
             sidebar = new Sidebar (settings);
 
-            // File view
-            file_view = new FileView (file_manager.file_model, settings);
+            // File view (uses filtered model so search works)
+            file_view = new FileView (file_manager.filtered_model, settings);
 
             // Status bar
             status_label = new Gtk.Label ("") {
@@ -168,6 +203,7 @@ namespace Astrum {
             // Toolbar view
             var toolbar_view = new Adw.ToolbarView ();
             toolbar_view.add_top_bar (header_bar);
+            toolbar_view.add_top_bar (search_bar);
             toolbar_view.content = toast_overlay;
 
             this.content = toolbar_view;
@@ -194,6 +230,8 @@ namespace Astrum {
                 { "add-bookmark", on_add_bookmark },
                 { "open-terminal", on_open_terminal },
                 { "preferences", on_preferences },
+                { "toggle-search", on_toggle_search },
+                { "focus-location", on_focus_location },
             };
             this.add_action_entries (action_entries, this);
         }
@@ -214,6 +252,8 @@ namespace Astrum {
             const string[] properties = { "<Alt>Return", null };
             const string[] toggle_hidden = { "<Control>h", null };
             const string[] open_terminal = { "<Control><Alt>t", null };
+            const string[] toggle_search = { "<Control>f", null };
+            const string[] focus_location = { "<Control>l", null };
 
             app.set_accels_for_action ("win.go-back", go_back);
             app.set_accels_for_action ("win.go-forward", go_forward);
@@ -229,6 +269,8 @@ namespace Astrum {
             app.set_accels_for_action ("win.properties", properties);
             app.set_accels_for_action ("win.toggle-hidden", toggle_hidden);
             app.set_accels_for_action ("win.open-terminal", open_terminal);
+            app.set_accels_for_action ("win.toggle-search", toggle_search);
+            app.set_accels_for_action ("win.focus-location", focus_location);
         }
 
         private void connect_signals () {
@@ -328,6 +370,12 @@ namespace Astrum {
                 forward_stack = new GLib.List<GLib.File> ();
             }
             navigating_history = false;
+
+            // Clear search when navigating to a new directory
+            if (search_bar.search_mode_enabled) {
+                search_entry.text = "";
+                file_manager.set_search_query ("");
+            }
 
             file_manager.navigate_to.begin (location);
         }
@@ -545,6 +593,17 @@ namespace Astrum {
         private void on_preferences () {
             var dialog = new PreferencesDialog (settings);
             dialog.present (this);
+        }
+
+        private void on_toggle_search () {
+            search_bar.search_mode_enabled = !search_bar.search_mode_enabled;
+            if (search_bar.search_mode_enabled) {
+                search_entry.grab_focus ();
+            }
+        }
+
+        private void on_focus_location () {
+            path_bar.enter_edit_mode ();
         }
 
         // UI updates

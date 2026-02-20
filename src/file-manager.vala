@@ -3,14 +3,31 @@
 
 namespace Astrum {
 
+    private class SearchFilter : Gtk.Filter {
+        public string query { get; set; default = ""; }
+
+        public override Gtk.FilterMatch get_strictness () {
+            return query.length == 0 ? Gtk.FilterMatch.ALL : Gtk.FilterMatch.SOME;
+        }
+
+        public override bool match (GLib.Object? item) {
+            if (query.length == 0) return true;
+            var file_item = item as FileItem;
+            if (file_item == null) return false;
+            return file_item.display_name.down ().contains (query.down ());
+        }
+    }
+
     public class FileManager : GLib.Object {
 
         public GLib.File current_directory { get; private set; }
         public GLib.ListStore file_model { get; private set; }
+        public Gtk.FilterListModel filtered_model { get; private set; }
         public GLib.Settings settings { get; private set; }
 
         private GLib.FileMonitor? monitor = null;
         private GLib.Cancellable? cancellable = null;
+        private SearchFilter search_filter;
 
         public signal void directory_changed (GLib.File directory);
         public signal void loading_started ();
@@ -20,6 +37,13 @@ namespace Astrum {
         public FileManager () {
             file_model = new GLib.ListStore (typeof (FileItem));
             settings = new GLib.Settings (APP_ID);
+            search_filter = new SearchFilter ();
+            filtered_model = new Gtk.FilterListModel (file_model, search_filter);
+        }
+
+        public void set_search_query (string query) {
+            search_filter.query = query;
+            search_filter.changed (Gtk.FilterChange.DIFFERENT);
         }
 
         public async void navigate_to (GLib.File directory) {
@@ -256,6 +280,43 @@ namespace Astrum {
         }
 
         private async void trash_recursively (GLib.File file) throws GLib.Error {
+            // First, try to trash the directory directly (works on most filesystems)
+            try {
+                yield file.trash_async (GLib.Priority.DEFAULT, null);
+                return;
+            } catch (GLib.Error e) {
+                if (!(e is GLib.IOError.NOT_SUPPORTED)) {
+                    throw e;
+                }
+            }
+
+            // Fallback: recursively delete contents, then trash the empty directory
+            var enumerator = yield file.enumerate_children_async (
+                string.join (",",
+                    GLib.FileAttribute.STANDARD_NAME,
+                    GLib.FileAttribute.STANDARD_TYPE
+                ),
+                GLib.FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
+                GLib.Priority.DEFAULT, null
+            );
+
+            while (true) {
+                var infos = yield enumerator.next_files_async (
+                    50, GLib.Priority.DEFAULT, null
+                );
+                if (infos == null || infos.length () == 0) break;
+
+                foreach (var info in infos) {
+                    var child = file.get_child (info.get_name ());
+                    if (info.get_file_type () == GLib.FileType.DIRECTORY) {
+                        yield trash_recursively (child);
+                    } else {
+                        yield child.trash_async (GLib.Priority.DEFAULT, null);
+                    }
+                }
+            }
+
+            yield enumerator.close_async (GLib.Priority.DEFAULT, null);
             yield file.trash_async (GLib.Priority.DEFAULT, null);
         }
 

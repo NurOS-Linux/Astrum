@@ -2,11 +2,13 @@
 
 Modern file manager for AetherDE, built with Vala, GTK4, and LibAdwaita.
 
+[![Translation status](https://hosted.weblate.org/widget/nuros/astrum/svg-badge.svg?native=1)](https://hosted.weblate.org/projects/nuros/astrum/)
+
 ## Features
 
 - Clean, modern GNOME HIG-compliant interface
 - List and grid view modes
-- Breadcrumb navigation
+- Search files in current folder
 - Bookmarks support
 - Copy, cut, paste operations
 - Show/hide hidden files
@@ -64,6 +66,8 @@ meson install -C build
 - `F2` — Rename
 - `Delete` — Move to trash
 - `Alt+Return` — Properties
+- `Ctrl+L` — Focus location bar
+- `Ctrl+F` — Search
 - `Ctrl+H` — Toggle hidden files
 - `Ctrl+Alt+T` — Open terminal
 - `Ctrl+Q` — Quit
