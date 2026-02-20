@@ -4,6 +4,8 @@ Modern file manager for AetherDE, built with Vala, GTK4, and LibAdwaita.
 
 [![Translation status](https://hosted.weblate.org/widget/nuros/astrum/svg-badge.svg?native=1)](https://hosted.weblate.org/projects/nuros/astrum/)
 
+![Astrum](screenshots/main.png)
+
 ## Features
 
 - Clean, modern GNOME HIG-compliant interface
