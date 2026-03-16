@@ -1,14 +1,13 @@
 # Dockerfile для сборки .rpm пакетов Astrum
-# Base: AlmaLinux 9 (совместимость с RHEL 9+, Rocky Linux 9+)
+# Base: Fedora 41 (glib 2.82+, GTK4 4.16+)
+# Совместимость: Fedora 41+, RHEL 9+ (с пересборкой)
 
-FROM almalinux:9
+FROM fedora:41
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Установка зависимостей для сборки
-# EPEL репозиторий нужен для некоторых пакетов
-RUN dnf install -y epel-release && \
-    dnf install -y \
+RUN dnf install -y \
     vala \
     vala-tools \
     meson \

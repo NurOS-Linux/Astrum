@@ -1,8 +1,8 @@
 # Dockerfile для сборки .deb пакетов Astrum
-# Base: Ubuntu 24.04 (glib 2.80+, GTK4 4.12+)
-# Совместимость: Ubuntu 24.04+, Debian 13+
+# Base: Debian Trixie (Testing, glib 2.82+, GTK4 4.16+)
+# Совместимость: Debian 13+, Ubuntu 24.04+
 
-FROM ubuntu:noble
+FROM debian:trixie-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 

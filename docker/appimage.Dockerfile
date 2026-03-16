@@ -1,11 +1,13 @@
 # Dockerfile для сборки .AppImage пакетов Astrum
-# Base: Ubuntu 20.04 (максимальная совместимость)
+# Base: Ubuntu 22.04 (баланс совместимости и свежих версий)
+# Статическая линковка библиотек где возможна
 
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Обновление и установка зависимостей для сборки
+# Используем -static где возможно для максимальной переносимости
 RUN apt-get update && apt-get install -y --no-install-recommends \
     valac \
     meson \
