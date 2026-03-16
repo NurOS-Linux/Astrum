@@ -1,7 +1,8 @@
 # Dockerfile для сборки .deb пакетов Astrum
-# Base: Debian Bookworm (совместимость с Debian 12+ и Ubuntu 22.04+)
+# Base: Ubuntu 24.04 (glib 2.80+, GTK4 4.12+)
+# Совместимость: Ubuntu 24.04+, Debian 13+
 
-FROM debian:bookworm-slim
+FROM ubuntu:noble
 
 ENV DEBIAN_FRONTEND=noninteractive
 

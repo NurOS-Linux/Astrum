@@ -4,7 +4,7 @@
 
 ```
 docker/
-├── deb.Dockerfile       # Сборка .deb пакетов (Debian Bookworm, Ubuntu 22.04+)
+├── deb.Dockerfile       # Сборка .deb пакетов (Ubuntu 24.04+, Debian 13+)
 ├── rpm.Dockerfile       # Сборка .rpm пакетов (AlmaLinux 9, RHEL 9+, Rocky 9+)
 ├── pacman.Dockerfile    # Сборка .pacman пакетов (Arch Linux)
 ├── appimage.Dockerfile  # Сборка .AppImage (универсальный, Ubuntu 20.04 base)
@@ -121,7 +121,7 @@ podman-compose build appimage-builder
 
 | Пакет | Дистрибутивы | Минимальная версия |
 |-------|--------------|-------------------|
-| `.deb` | Debian, Ubuntu | Debian 12+, Ubuntu 22.04+ |
+| `.deb` | Debian, Ubuntu | Ubuntu 24.04+, Debian 13+ |
 | `.rpm` | RHEL, AlmaLinux, Rocky | 9+ |
 | `.pacman` | Arch Linux | Любая |
 | `.AppImage` | Любой Linux | Ядро 4.4+, glibc 2.17+ |
