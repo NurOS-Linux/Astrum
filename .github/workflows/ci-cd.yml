@@ -59,14 +59,13 @@ jobs:
           EOF
 
       - name: Create artifacts directory
-        run: mkdir -p docker/artifacts
+        run: mkdir -p artifacts
 
       - name: Build all packages with podman-compose
         run: |
           VERSION=${{ steps.get_version.outputs.version }}
-          cd docker
           export VERSION=${VERSION}
-          podman-compose build \
+          podman-compose -f docker-compose.yml build \
             deb-builder \
             rpm-builder \
             pkg-builder \
@@ -75,38 +74,37 @@ jobs:
       - name: Collect artifacts
         run: |
           # Извлечение артефактов из контейнеров
-          cd docker
           
           # .deb
           CONTAINER_ID=$(podman create --name astrum-deb-${{ github.run_id }} astrum-deb-builder 2>/dev/null || echo "")
           if [ -n "${CONTAINER_ID}" ]; then
-            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ../docker/artifacts/ 2>/dev/null || true
+            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
             podman rm ${CONTAINER_ID} 2>/dev/null || true
           fi
           
           # .rpm
           CONTAINER_ID=$(podman create --name astrum-rpm-${{ github.run_id }} astrum-rpm-builder 2>/dev/null || echo "")
           if [ -n "${CONTAINER_ID}" ]; then
-            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ../docker/artifacts/ 2>/dev/null || true
+            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
             podman rm ${CONTAINER_ID} 2>/dev/null || true
           fi
           
           # .pacman
           CONTAINER_ID=$(podman create --name astrum-pkg-${{ github.run_id }} astrum-pkg-builder 2>/dev/null || echo "")
           if [ -n "${CONTAINER_ID}" ]; then
-            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ../docker/artifacts/ 2>/dev/null || true
+            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
             podman rm ${CONTAINER_ID} 2>/dev/null || true
           fi
           
           # .AppImage
           CONTAINER_ID=$(podman create --name astrum-appimage-${{ github.run_id }} astrum-appimage-builder 2>/dev/null || echo "")
           if [ -n "${CONTAINER_ID}" ]; then
-            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ../docker/artifacts/ 2>/dev/null || true
+            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
             podman rm ${CONTAINER_ID} 2>/dev/null || true
           fi
 
           echo "Collected artifacts:"
-          ls -la ../docker/artifacts/
+          ls -la ./artifacts/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
