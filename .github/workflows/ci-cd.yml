@@ -1,0 +1,324 @@
+# CI/CD для сборки и публикации пакетов Astrum
+# Сборка .deb (Debian/Ubuntu), .rpm (Fedora), .pkg.zst (Arch Linux)
+# Публикация в GitHub Releases при создании тега
+
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'      # Release теги: v1.0.0, v1.2.3, etc.
+      - 'v*.*.*-rc*'  # Pre-release теги: v1.0.0-rc1, v1.2.3-rc2, etc.
+
+permissions:
+  contents: write     # Для создания релизов и загрузки артефактов
+
+jobs:
+  # Сборка всех типов пакетов
+  build-packages:
+    name: Build Packages
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Building version: ${VERSION}"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            podman \
+            python3-pip \
+            pigz \
+            slirp4netns \
+            crun
+          # Установка свежей версии podman-compose (через pip)
+          # Системная версия старая и не поддерживает профили
+          pip3 install --user --upgrade podman-compose
+
+      - name: Setup podman
+        run: |
+          # Настройка podman для работы без root
+          mkdir -p ~/.config/containers
+          cat > ~/.config/containers/containers.conf << EOF
+          [containers]
+          netns="host"
+          userns="host"
+          ipcns="host"
+          utsns="host"
+          cgroupns="host"
+          cgroups="disabled"
+          log_driver = "k8s-file"
+          EOF
+
+      - name: Create artifacts directory
+        run: mkdir -p docker/artifacts
+
+      - name: Build all packages with podman-compose
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          cd docker
+          export VERSION=${VERSION}
+          podman-compose build \
+            deb-builder \
+            rpm-builder \
+            pkg-builder \
+            appimage-builder
+
+      - name: Collect artifacts
+        run: |
+          # Извлечение артефактов из контейнеров
+          cd docker
+          
+          # .deb
+          CONTAINER_ID=$(podman create --name astrum-deb-${{ github.run_id }} astrum-deb-builder 2>/dev/null || echo "")
+          if [ -n "${CONTAINER_ID}" ]; then
+            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ../docker/artifacts/ 2>/dev/null || true
+            podman rm ${CONTAINER_ID} 2>/dev/null || true
+          fi
+          
+          # .rpm
+          CONTAINER_ID=$(podman create --name astrum-rpm-${{ github.run_id }} astrum-rpm-builder 2>/dev/null || echo "")
+          if [ -n "${CONTAINER_ID}" ]; then
+            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ../docker/artifacts/ 2>/dev/null || true
+            podman rm ${CONTAINER_ID} 2>/dev/null || true
+          fi
+          
+          # .pacman
+          CONTAINER_ID=$(podman create --name astrum-pkg-${{ github.run_id }} astrum-pkg-builder 2>/dev/null || echo "")
+          if [ -n "${CONTAINER_ID}" ]; then
+            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ../docker/artifacts/ 2>/dev/null || true
+            podman rm ${CONTAINER_ID} 2>/dev/null || true
+          fi
+          
+          # .AppImage
+          CONTAINER_ID=$(podman create --name astrum-appimage-${{ github.run_id }} astrum-appimage-builder 2>/dev/null || echo "")
+          if [ -n "${CONTAINER_ID}" ]; then
+            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ../docker/artifacts/ 2>/dev/null || true
+            podman rm ${CONTAINER_ID} 2>/dev/null || true
+          fi
+
+          echo "Collected artifacts:"
+          ls -la ../docker/artifacts/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: docker/artifacts/*
+          retention-days: 7
+
+  # Создание релиза на GitHub
+  create-release:
+    name: Create GitHub Release
+    needs: build-packages
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get version and determine release type
+        id: get_info
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          
+          # Определение pre-release по наличию -rc* в теге
+          if [[ "${TAG}" == *"-rc"* ]]; then
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+            echo "Release type: Pre-release"
+          else
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+            echo "Release type: Release"
+          fi
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: packages
+          path: ./packages
+
+      - name: List packages
+        run: |
+          echo "Packages to upload:"
+          ls -la ./packages/
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION=${{ steps.get_info.outputs.version }}
+          TAG=${{ steps.get_info.outputs.tag }}
+          IS_PRERELEASE=${{ steps.get_info.outputs.prerelease }}
+
+          # Получение предыдущего тега
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)
+
+          echo "## ${TAG}" > /tmp/release_notes.md
+          echo "" >> /tmp/release_notes.md
+
+          # Определение типа релиза
+          if [[ "${IS_PRERELEASE}" == "true" ]]; then
+            echo "⚠️ **Pre-release** — тестовая версия для раннего доступа" >> /tmp/release_notes.md
+            echo "" >> /tmp/release_notes.md
+          fi
+
+          # Генерация changelog с группировкой
+          echo "## 📝 Changes" >> /tmp/release_notes.md
+          echo "" >> /tmp/release_notes.md
+
+          # Получение коммитов и группировка по типам
+          COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:"%s" --reverse)
+
+          # Категории
+          FEATURES=""
+          FIXES=""
+          DOCS=""
+          STYLE=""
+          REFACTOR=""
+          PERF=""
+          TEST=""
+          BUILD=""
+          CI=""
+          CHORE=""
+          OTHER=""
+
+          while IFS= read -r commit; do
+            if [[ "${commit}" =~ ^feat(\(.+\))?:\ .* ]]; then
+              FEATURES="${FEATURES}- ${commit}\n"
+            elif [[ "${commit}" =~ ^fix(\(.+\))?:\ .* ]]; then
+              FIXES="${FIXES}- ${commit}\n"
+            elif [[ "${commit}" =~ ^docs(\(.+\))?:\ .* ]]; then
+              DOCS="${DOCS}- ${commit}\n"
+            elif [[ "${commit}" =~ ^style(\(.+\))?:\ .* ]]; then
+              STYLE="${STYLE}- ${commit}\n"
+            elif [[ "${commit}" =~ ^refactor(\(.+\))?:\ .* ]]; then
+              REFACTOR="${REFACTOR}- ${commit}\n"
+            elif [[ "${commit}" =~ ^perf(\(.+\))?:\ .* ]]; then
+              PERF="${PERF}- ${commit}\n"
+            elif [[ "${commit}" =~ ^test(\(.+\))?:\ .* ]]; then
+              TEST="${TEST}- ${commit}\n"
+            elif [[ "${commit}" =~ ^build(\(.+\))?:\ .* ]]; then
+              BUILD="${BUILD}- ${commit}\n"
+            elif [[ "${commit}" =~ ^ci(\(.+\))?:\ .* ]]; then
+              CI="${CI}- ${commit}\n"
+            elif [[ "${commit}" =~ ^chore(\(.+\))?:\ .* ]]; then
+              CHORE="${CHORE}- ${commit}\n"
+            else
+              OTHER="${OTHER}- ${commit}\n"
+            fi
+          done <<< "${COMMITS}"
+
+          # Вывод категорий
+          if [ -n "${FEATURES}" ]; then
+            echo "### ✨ Features" >> /tmp/release_notes.md
+            echo -e "${FEATURES}" >> /tmp/release_notes.md
+          fi
+
+          if [ -n "${FIXES}" ]; then
+            echo "### 🐛 Bug Fixes" >> /tmp/release_notes.md
+            echo -e "${FIXES}" >> /tmp/release_notes.md
+          fi
+
+          if [ -n "${DOCS}" ]; then
+            echo "### 📚 Documentation" >> /tmp/release_notes.md
+            echo -e "${DOCS}" >> /tmp/release_notes.md
+          fi
+
+          if [ -n "${BUILD}" ]; then
+            echo "### 📦 Build System" >> /tmp/release_notes.md
+            echo -e "${BUILD}" >> /tmp/release_notes.md
+          fi
+
+          if [ -n "${CI}" ]; then
+            echo "### ⚙️ CI/CD" >> /tmp/release_notes.md
+            echo -e "${CI}" >> /tmp/release_notes.md
+          fi
+
+          if [ -n "${CHORE}" ]; then
+            echo "### 🔧 Chores" >> /tmp/release_notes.md
+            echo -e "${CHORE}" >> /tmp/release_notes.md
+          fi
+
+          if [ -n "${OTHER}" ]; then
+            echo "### Other Changes" >> /tmp/release_notes.md
+            echo -e "${OTHER}" >> /tmp/release_notes.md
+          fi
+
+          # Если ничего не найдено — выводим все коммиты
+          if [ -z "${FEATURES}${FIXES}${DOCS}${STYLE}${REFACTOR}${PERF}${TEST}${BUILD}${CI}${CHORE}${OTHER}" ]; then
+            echo "### All Changes" >> /tmp/release_notes.md
+            echo "" >> /tmp/release_notes.md
+            git log ${PREV_TAG}..HEAD --pretty=format:"- %s" >> /tmp/release_notes.md
+            echo "" >> /tmp/release_notes.md
+          fi
+
+          echo "" >> /tmp/release_notes.md
+          echo "## 📦 Packages" >> /tmp/release_notes.md
+          echo "" >> /tmp/release_notes.md
+          echo "| Package | Target |" >> /tmp/release_notes.md
+          echo "|---------|--------|" >> /tmp/release_notes.md
+          echo "| \`astrum_${VERSION}_amd64.deb\` | Debian 12+, Ubuntu 22.04+ |" >> /tmp/release_notes.md
+          echo "| \`astrum-${VERSION}-1.x86_64.rpm\` | RHEL 9+, Fedora, AlmaLinux 9+ |" >> /tmp/release_notes.md
+          echo "| \`astrum-${VERSION}-1-x86_64.pacman\` | Arch Linux |" >> /tmp/release_notes.md
+          echo "| \`Astrum-${VERSION}-x86_64.AppImage\` | Universal (Any Linux) |" >> /tmp/release_notes.md
+          echo "" >> /tmp/release_notes.md
+
+          echo "## 🚀 Installation" >> /tmp/release_notes.md
+          echo "" >> /tmp/release_notes.md
+
+          echo "### Debian/Ubuntu" >> /tmp/release_notes.md
+          echo '```bash' >> /tmp/release_notes.md
+          echo "sudo apt install ./astrum_${VERSION}_amd64.deb" >> /tmp/release_notes.md
+          echo '```' >> /tmp/release_notes.md
+          echo "" >> /tmp/release_notes.md
+
+          echo "### Fedora/RHEL" >> /tmp/release_notes.md
+          echo '```bash' >> /tmp/release_notes.md
+          echo "sudo dnf install ./astrum-${VERSION}-1.x86_64.rpm" >> /tmp/release_notes.md
+          echo '```' >> /tmp/release_notes.md
+          echo "" >> /tmp/release_notes.md
+
+          echo "### Arch Linux" >> /tmp/release_notes.md
+          echo '```bash' >> /tmp/release_notes.md
+          echo "sudo pacman -U ./astrum-${VERSION}-1-x86_64.pacman" >> /tmp/release_notes.md
+          echo '```' >> /tmp/release_notes.md
+          echo "" >> /tmp/release_notes.md
+
+          echo "### Universal (Any Linux)" >> /tmp/release_notes.md
+          echo '```bash' >> /tmp/release_notes.md
+          echo "chmod +x ./Astrum-${VERSION}-x86_64.AppImage" >> /tmp/release_notes.md
+          echo "./Astrum-${VERSION}-x86_64.AppImage" >> /tmp/release_notes.md
+          echo '```' >> /tmp/release_notes.md
+
+          echo "" >> /tmp/release_notes.md
+          echo "---" >> /tmp/release_notes.md
+          echo "*Release created automatically by GitHub Actions*" >> /tmp/release_notes.md
+
+          echo "=== Release Notes ==="
+          cat /tmp/release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_info.outputs.tag }}
+          name: Astrum ${{ steps.get_info.outputs.tag }}
+          body_path: /tmp/release_notes.md
+          prerelease: ${{ steps.get_info.outputs.prerelease == 'true' }}
+          generate_release_notes: false
+          files: |
+            ./packages/*.deb
+            ./packages/*.rpm
+            ./packages/*.pacman
+            ./packages/*.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,75 @@
+# Docker Compose для оркестрации сборки пакетов Astrum
+# Используется для локальной сборки всех трёх типов пакетов
+
+services:
+  # Сборка .deb для Debian/Ubuntu
+  deb-builder:
+    build:
+      context: .
+      dockerfile: docker/deb.Dockerfile
+      args:
+        VERSION: ${VERSION:-0.0.1}
+    container_name: astrum-deb-builder
+    volumes:
+      - ./artifacts:/workspace/artifacts
+    platform: linux/amd64
+
+  # Сборка .rpm для Fedora
+  rpm-builder:
+    build:
+      context: .
+      dockerfile: docker/rpm.Dockerfile
+      args:
+        VERSION: ${VERSION:-0.0.1}
+    container_name: astrum-rpm-builder
+    volumes:
+      - ./artifacts:/workspace/artifacts
+    platform: linux/amd64
+
+  # Сборка .pacman для Arch Linux
+  pkg-builder:
+    build:
+      context: .
+      dockerfile: docker/pacman.Dockerfile
+      args:
+        VERSION: ${VERSION:-0.0.1}
+    container_name: astrum-pkg-builder
+    volumes:
+      - ./artifacts:/workspace/artifacts
+    platform: linux/amd64
+
+  # Сборка .AppImage (универсальный пакет для Linux)
+  appimage-builder:
+    build:
+      context: .
+      dockerfile: docker/appimage.Dockerfile
+      args:
+        VERSION: ${VERSION:-0.0.1}
+    container_name: astrum-appimage-builder
+    volumes:
+      - ./artifacts:/workspace/artifacts
+    platform: linux/amd64
+
+  # Превью сборки - запуск File Manager для тестирования
+  # Контейнер не сохраняет артефакты, удаляется после завершения
+  # Поддержка X410 (Windows) и WSLg (Linux)
+  test:
+    build:
+      context: .
+      dockerfile: docker/test.Dockerfile
+    container_name: astrum-test
+    # X410 использует :0
+    # WSLg использует :0
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - GDK_BACKEND=x11
+    # Проброс X11 сокета для Linux/WSLg
+    # Для Windows с X410 этот volume игнорируется
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    network_mode: default
+    # Контейнер не перезапускается - удаляется после закрытия приложения
+    restart: "no"
+
+volumes:
+  artifacts:
