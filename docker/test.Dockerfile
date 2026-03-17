@@ -87,7 +87,7 @@ RUN if [ -d data ]; then \
 
 # Команда по умолчанию - запуск приложения из build директории
 # Контейнер завершается вместе с приложением
-CMD ["sh", "-c", "mkdir -p /runtime && \
+CMD ["sh", "-c", "mkdir -p /runtime/dconf && chmod 777 /runtime/dconf && mkdir -p /tmp/runtime-root && \
                dbus-daemon --session --address=\"unix:path=/tmp/dbus-session\" --fork && \
                GSETTINGS_SCHEMA_DIR=./data \
                DBUS_SESSION_BUS_ADDRESS=\"unix:path=/tmp/dbus-session\" \
