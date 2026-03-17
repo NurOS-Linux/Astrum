@@ -12,6 +12,8 @@ RUN apk add --no-cache \
     vala \
     meson \
     ninja \
+    gcc \
+    musl-dev \
     gtk4-dev \
     libadwaita-dev \
     glib-dev \
