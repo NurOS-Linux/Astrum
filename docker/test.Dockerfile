@@ -58,7 +58,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Инициализация dbus и создание runtime директории
 RUN dbus-uuidgen --ensure=/var/lib/dbus/machine-id && \
     mkdir -p /runtime && \
-    chmod 700 /runtime
+    mkdir -p /runtime/dconf && \
+    chmod 700 /runtime && \
+    chmod 777 /runtime/dconf
 
 # Переменные окружения для X11/Wayland
 # WSLg автоматически устанавливает WAYLAND_DISPLAY и DISPLAY
