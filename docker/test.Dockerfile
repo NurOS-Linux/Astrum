@@ -9,7 +9,7 @@ FROM opensuse/tumbleweed:latest
 # Установка зависимостей
 # Runtime библиотеки для GTK4, Mesa (GLX/EGL/GBM), шрифты
 RUN zypper refresh && \
-    zypper --non-interactive install \
+    zypper --non-interactive install --no-recommends \
     vala \
     meson \
     ninja \
