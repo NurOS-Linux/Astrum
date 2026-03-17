@@ -87,8 +87,9 @@ RUN echo "Name:           astrum" > /workspace/rpmbuild/SPECS/astrum.spec \
 
 # Сборка .rpm пакета
 WORKDIR /workspace/rpmbuild
-RUN rpmbuild -bb SPECS/astrum.spec --define "_topdir /workspace/rpmbuild" \
-    && cp RPMS/x86_64/astrum-${VERSION}-1.x86_64.rpm /workspace/artifacts/astrum-${VERSION}-1.x86_64.rpm
+RUN mkdir -p /workspace/artifacts && \
+    rpmbuild -bb SPECS/astrum.spec --define "_topdir /workspace/rpmbuild" && \
+    cp RPMS/x86_64/astrum-${VERSION}-1.x86_64.rpm /workspace/artifacts/astrum-${VERSION}-1.x86_64.rpm
 
 # Директория для артефактов
 VOLUME /workspace/artifacts

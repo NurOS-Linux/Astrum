@@ -55,7 +55,8 @@ RUN mkdir -p /workspace/deb/DEBIAN \
 
 # Сборка .deb пакета
 WORKDIR /workspace/deb
-RUN dpkg-deb --build . /workspace/artifacts/astrum_${VERSION}_amd64.deb
+RUN mkdir -p /workspace/artifacts && \
+    dpkg-deb --build . /workspace/artifacts/astrum_${VERSION}_amd64.deb
 
 # Директория для артефактов
 VOLUME /workspace/artifacts
