@@ -12,13 +12,26 @@ on:
 
 permissions:
   contents: write     # Для создания релизов и загрузки артефактов
+  attestations: write # Для аттестаций
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   # Сборка всех типов пакетов
   build-packages:
     name: Build Packages
     runs-on: ubuntu-latest
-    
+
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      tag: ${{ steps.get_version.outputs.tag }}
+      deb_status: ${{ steps.build-deb.outcome }}
+      rpm_status: ${{ steps.build-rpm.outcome }}
+      pacman_status: ${{ steps.build-pacman.outcome }}
+      appimage_status: ${{ steps.build-appimage.outcome }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,7 +40,9 @@ jobs:
         id: get_version
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
+          TAG=${GITHUB_REF#refs/tags/}
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "Building version: ${VERSION}"
 
       - name: Install dependencies
@@ -61,56 +76,173 @@ jobs:
       - name: Create artifacts directory
         run: mkdir -p artifacts
 
-      - name: Build all packages with podman-compose
+      # Сборка .deb
+      - name: Build .deb package
+        id: build-deb
+        continue-on-error: true
         run: |
+          echo "=== Starting .deb build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
-          podman-compose -f docker-compose.yml build \
-            deb-builder \
-            rpm-builder \
-            pkg-builder \
-            appimage-builder
-
-      - name: Collect artifacts
-        run: |
-          # Извлечение артефактов из контейнеров
           
-          # .deb
+          echo "Building deb with version: ${VERSION}"
+          podman-compose -f docker-compose.yml build deb-builder
+          
+          echo "Extracting deb artifact..."
           CONTAINER_ID=$(podman create --name astrum-deb-${{ github.run_id }} astrum-deb-builder 2>/dev/null || echo "")
           if [ -n "${CONTAINER_ID}" ]; then
             podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
             podman rm ${CONTAINER_ID} 2>/dev/null || true
           fi
           
-          # .rpm
+          echo "=== .deb build completed at $(date) ==="
+          ls -la ./artifacts/*.deb 2>/dev/null || echo "No .deb artifacts found"
+
+      # Сборка .rpm
+      - name: Build .rpm package
+        id: build-rpm
+        continue-on-error: true
+        run: |
+          echo "=== Starting .rpm build at $(date) ==="
+          VERSION=${{ steps.get_version.outputs.version }}
+          export VERSION=${VERSION}
+          
+          echo "Building rpm with version: ${VERSION}"
+          podman-compose -f docker-compose.yml build rpm-builder
+          
+          echo "Extracting rpm artifact..."
           CONTAINER_ID=$(podman create --name astrum-rpm-${{ github.run_id }} astrum-rpm-builder 2>/dev/null || echo "")
           if [ -n "${CONTAINER_ID}" ]; then
             podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
             podman rm ${CONTAINER_ID} 2>/dev/null || true
           fi
           
-          # .pacman
+          echo "=== .rpm build completed at $(date) ==="
+          ls -la ./artifacts/*.rpm 2>/dev/null || echo "No .rpm artifacts found"
+
+      # Сборка .pacman
+      - name: Build .pacman package
+        id: build-pacman
+        continue-on-error: true
+        run: |
+          echo "=== Starting .pacman build at $(date) ==="
+          VERSION=${{ steps.get_version.outputs.version }}
+          export VERSION=${VERSION}
+          
+          echo "Building pacman with version: ${VERSION}"
+          podman-compose -f docker-compose.yml build pkg-builder
+          
+          echo "Extracting pacman artifact..."
           CONTAINER_ID=$(podman create --name astrum-pkg-${{ github.run_id }} astrum-pkg-builder 2>/dev/null || echo "")
           if [ -n "${CONTAINER_ID}" ]; then
             podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
             podman rm ${CONTAINER_ID} 2>/dev/null || true
           fi
           
-          # .AppImage
+          echo "=== .pacman build completed at $(date) ==="
+          ls -la ./artifacts/*.pacman 2>/dev/null || echo "No .pacman artifacts found"
+
+      # Сборка .AppImage
+      - name: Build .AppImage package
+        id: build-appimage
+        continue-on-error: true
+        run: |
+          echo "=== Starting .AppImage build at $(date) ==="
+          VERSION=${{ steps.get_version.outputs.version }}
+          export VERSION=${VERSION}
+          
+          echo "Building appimage with version: ${VERSION}"
+          podman-compose -f docker-compose.yml build appimage-builder
+          
+          echo "Extracting appimage artifact..."
           CONTAINER_ID=$(podman create --name astrum-appimage-${{ github.run_id }} astrum-appimage-builder 2>/dev/null || echo "")
           if [ -n "${CONTAINER_ID}" ]; then
             podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
             podman rm ${CONTAINER_ID} 2>/dev/null || true
           fi
+          
+          echo "=== .AppImage build completed at $(date) ==="
+          ls -la ./artifacts/*.AppImage 2>/dev/null || echo "No .AppImage artifacts found"
 
-          echo "Collected artifacts:"
-          ls -la ./artifacts/
+      # Генерация attestation.json
+      - name: Generate attestation.json
+        id: generate-attestation
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          TAG=${{ steps.get_version.outputs.tag }}
+          COMMIT_SHA=${{ github.sha }}
+          BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          RUNNER="ubuntu-latest"
+          
+          # Функция для вычисления SHA256
+          get_sha256() {
+            if [ -f "$1" ]; then
+              sha256sum "$1" | awk '{print $1}'
+            else
+              echo "not_found"
+            fi
+          }
+          
+          # Статусы сборок
+          DEB_STATUS="${{ steps.build-deb.outcome }}"
+          RPM_STATUS="${{ steps.build-rpm.outcome }}"
+          PACMAN_STATUS="${{ steps.build-pacman.outcome }}"
+          APPIMAGE_STATUS="${{ steps.build-appimage.outcome }}"
+          
+          # Хеши артефактов
+          DEB_FILE=$(ls ./artifacts/*.deb 2>/dev/null | head -1)
+          RPM_FILE=$(ls ./artifacts/*.rpm 2>/dev/null | head -1)
+          PACMAN_FILE=$(ls ./artifacts/*.pacman 2>/dev/null | head -1)
+          APPIMAGE_FILE=$(ls ./artifacts/*.AppImage 2>/dev/null | head -1)
+          
+          DEB_SHA=$(get_sha256 "${DEB_FILE}")
+          RPM_SHA=$(get_sha256 "${RPM_FILE}")
+          PACMAN_SHA=$(get_sha256 "${PACMAN_FILE}")
+          APPIMAGE_SHA=$(get_sha256 "${APPIMAGE_FILE}")
+          
+          # Генерация JSON
+          cat > ./artifacts/attestation.json << EOF
+          {
+            "version": "${VERSION}",
+            "tag": "${TAG}",
+            "commit": "${COMMIT_SHA}",
+            "buildDate": "${BUILD_DATE}",
+            "runner": "${RUNNER}",
+            "workflow": "${{ github.workflow }}",
+            "runId": "${{ github.run_id }}",
+            "packages": {
+              "deb": {
+                "status": "${DEB_STATUS}",
+                "file": "$(basename ${DEB_FILE:-none})",
+                "sha256": "${DEB_SHA}"
+              },
+              "rpm": {
+                "status": "${RPM_STATUS}",
+                "file": "$(basename ${RPM_FILE:-none})",
+                "sha256": "${RPM_SHA}"
+              },
+              "pacman": {
+                "status": "${PACMAN_STATUS}",
+                "file": "$(basename ${PACMAN_FILE:-none})",
+                "sha256": "${PACMAN_SHA}"
+              },
+              "appimage": {
+                "status": "${APPIMAGE_STATUS}",
+                "file": "$(basename ${APPIMAGE_FILE:-none})",
+                "sha256": "${APPIMAGE_SHA}"
+              }
+            }
+          }
+          EOF
+          
+          echo "=== Generated attestation.json ==="
+          cat ./artifacts/attestation.json
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: packages
-          path: docker/artifacts/*
+          path: artifacts/*
           retention-days: 7
 
   # Создание релиза на GitHub
@@ -118,7 +250,7 @@ jobs:
     name: Create GitHub Release
     needs: build-packages
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -126,11 +258,11 @@ jobs:
       - name: Get version and determine release type
         id: get_info
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${{ needs.build-packages.outputs.version }}
+          TAG=${{ needs.build-packages.outputs.tag }}
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          
+
           # Определение pre-release по наличию -rc* в теге
           if [[ "${TAG}" == *"-rc"* ]]; then
             echo "prerelease=true" >> $GITHUB_OUTPUT
@@ -146,10 +278,18 @@ jobs:
           name: packages
           path: ./packages
 
-      - name: List packages
+      - name: List and verify packages
         run: |
-          echo "Packages to upload:"
+          echo "=== Available packages ==="
           ls -la ./packages/
+          
+          echo ""
+          echo "=== SHA256 checksums ==="
+          sha256sum ./packages/* 2>/dev/null || echo "No packages found"
+          
+          echo ""
+          echo "=== Attestation ==="
+          cat ./packages/attestation.json 2>/dev/null || echo "No attestation.json found"
 
       - name: Generate release notes
         id: release_notes
@@ -157,26 +297,70 @@ jobs:
           VERSION=${{ steps.get_info.outputs.version }}
           TAG=${{ steps.get_info.outputs.tag }}
           IS_PRERELEASE=${{ steps.get_info.outputs.prerelease }}
-
+          
+          # Статусы сборок
+          DEB_STATUS="${{ needs.build-packages.outputs.deb_status }}"
+          RPM_STATUS="${{ needs.build-packages.outputs.rpm_status }}"
+          PACMAN_STATUS="${{ needs.build-packages.outputs.pacman_status }}"
+          APPIMAGE_STATUS="${{ needs.build-packages.outputs.appimage_status }}"
+          
           # Получение предыдущего тега
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)
-
+          
           echo "## ${TAG}" > /tmp/release_notes.md
           echo "" >> /tmp/release_notes.md
-
+          
           # Определение типа релиза
           if [[ "${IS_PRERELEASE}" == "true" ]]; then
             echo "⚠️ **Pre-release** — тестовая версия для раннего доступа" >> /tmp/release_notes.md
             echo "" >> /tmp/release_notes.md
           fi
-
+          
+          # Статус сборок
+          echo "## 🏗️ Build Status" >> /tmp/release_notes.md
+          echo "" >> /tmp/release_notes.md
+          echo "| Package | Status |" >> /tmp/release_notes.md
+          echo "|---------|--------|" >> /tmp/release_notes.md
+          
+          if [[ "${DEB_STATUS}" == "success" ]]; then
+            echo "| .deb (Debian/Ubuntu) | ✅ Success |" >> /tmp/release_notes.md
+          else
+            echo "| .deb (Debian/Ubuntu) | ❌ Failed |" >> /tmp/release_notes.md
+          fi
+          
+          if [[ "${RPM_STATUS}" == "success" ]]; then
+            echo "| .rpm (Fedora/RHEL) | ✅ Success |" >> /tmp/release_notes.md
+          else
+            echo "| .rpm (Fedora/RHEL) | ❌ Failed |" >> /tmp/release_notes.md
+          fi
+          
+          if [[ "${PACMAN_STATUS}" == "success" ]]; then
+            echo "| .pacman (Arch Linux) | ✅ Success |" >> /tmp/release_notes.md
+          else
+            echo "| .pacman (Arch Linux) | ❌ Failed |" >> /tmp/release_notes.md
+          fi
+          
+          if [[ "${APPIMAGE_STATUS}" == "success" ]]; then
+            echo "| .AppImage (Universal) | ✅ Success |" >> /tmp/release_notes.md
+          else
+            echo "| .AppImage (Universal) | ❌ Failed |" >> /tmp/release_notes.md
+          fi
+          
+          echo "" >> /tmp/release_notes.md
+          
+          # Проверка что хотя бы одна сборка успешна
+          if [[ "${DEB_STATUS}" != "success" && "${RPM_STATUS}" != "success" && "${PACMAN_STATUS}" != "success" && "${APPIMAGE_STATUS}" != "success" ]]; then
+            echo "⚠️ **Warning:** All builds failed! This release contains no packages." >> /tmp/release_notes.md
+            echo "" >> /tmp/release_notes.md
+          fi
+          
           # Генерация changelog с группировкой
           echo "## 📝 Changes" >> /tmp/release_notes.md
           echo "" >> /tmp/release_notes.md
-
+          
           # Получение коммитов и группировка по типам
           COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:"%s" --reverse)
-
+          
           # Категории
           FEATURES=""
           FIXES=""
@@ -189,7 +373,7 @@ jobs:
           CI=""
           CHORE=""
           OTHER=""
-
+          
           while IFS= read -r commit; do
             if [[ "${commit}" =~ ^feat(\(.+\))?:\ .* ]]; then
               FEATURES="${FEATURES}- ${commit}\n"
@@ -215,43 +399,43 @@ jobs:
               OTHER="${OTHER}- ${commit}\n"
             fi
           done <<< "${COMMITS}"
-
+          
           # Вывод категорий
           if [ -n "${FEATURES}" ]; then
             echo "### ✨ Features" >> /tmp/release_notes.md
             echo -e "${FEATURES}" >> /tmp/release_notes.md
           fi
-
+          
           if [ -n "${FIXES}" ]; then
             echo "### 🐛 Bug Fixes" >> /tmp/release_notes.md
             echo -e "${FIXES}" >> /tmp/release_notes.md
           fi
-
+          
           if [ -n "${DOCS}" ]; then
             echo "### 📚 Documentation" >> /tmp/release_notes.md
             echo -e "${DOCS}" >> /tmp/release_notes.md
           fi
-
+          
           if [ -n "${BUILD}" ]; then
             echo "### 📦 Build System" >> /tmp/release_notes.md
             echo -e "${BUILD}" >> /tmp/release_notes.md
           fi
-
+          
           if [ -n "${CI}" ]; then
             echo "### ⚙️ CI/CD" >> /tmp/release_notes.md
             echo -e "${CI}" >> /tmp/release_notes.md
           fi
-
+          
           if [ -n "${CHORE}" ]; then
             echo "### 🔧 Chores" >> /tmp/release_notes.md
             echo -e "${CHORE}" >> /tmp/release_notes.md
           fi
-
+          
           if [ -n "${OTHER}" ]; then
             echo "### Other Changes" >> /tmp/release_notes.md
             echo -e "${OTHER}" >> /tmp/release_notes.md
           fi
-
+          
           # Если ничего не найдено — выводим все коммиты
           if [ -z "${FEATURES}${FIXES}${DOCS}${STYLE}${REFACTOR}${PERF}${TEST}${BUILD}${CI}${CHORE}${OTHER}" ]; then
             echo "### All Changes" >> /tmp/release_notes.md
@@ -259,49 +443,74 @@ jobs:
             git log ${PREV_TAG}..HEAD --pretty=format:"- %s" >> /tmp/release_notes.md
             echo "" >> /tmp/release_notes.md
           fi
-
+          
           echo "" >> /tmp/release_notes.md
-          echo "## 📦 Packages" >> /tmp/release_notes.md
+          echo "## 📦 Available Packages" >> /tmp/release_notes.md
           echo "" >> /tmp/release_notes.md
-          echo "| Package | Target |" >> /tmp/release_notes.md
-          echo "|---------|--------|" >> /tmp/release_notes.md
-          echo "| \`astrum_${VERSION}_amd64.deb\` | Debian 12+, Ubuntu 22.04+ |" >> /tmp/release_notes.md
-          echo "| \`astrum-${VERSION}-1.x86_64.rpm\` | RHEL 9+, Fedora, AlmaLinux 9+ |" >> /tmp/release_notes.md
-          echo "| \`astrum-${VERSION}-1-x86_64.pacman\` | Arch Linux |" >> /tmp/release_notes.md
-          echo "| \`Astrum-${VERSION}-x86_64.AppImage\` | Universal (Any Linux) |" >> /tmp/release_notes.md
+          
+          if [[ "${DEB_STATUS}" == "success" ]]; then
+            echo "| \`astrum_${VERSION}_amd64.deb\` | Debian 12+, Ubuntu 24.04+ |" >> /tmp/release_notes.md
+          fi
+          if [[ "${RPM_STATUS}" == "success" ]]; then
+            echo "| \`astrum-${VERSION}-1.x86_64.rpm\` | Fedora 41+, RHEL 9+ |" >> /tmp/release_notes.md
+          fi
+          if [[ "${PACMAN_STATUS}" == "success" ]]; then
+            echo "| \`astrum-${VERSION}-1-x86_64.pacman\` | Arch Linux |" >> /tmp/release_notes.md
+          fi
+          if [[ "${APPIMAGE_STATUS}" == "success" ]]; then
+            echo "| \`Astrum-${VERSION}-x86_64.AppImage\` | Universal (Any Linux) |" >> /tmp/release_notes.md
+          fi
+          
           echo "" >> /tmp/release_notes.md
-
           echo "## 🚀 Installation" >> /tmp/release_notes.md
           echo "" >> /tmp/release_notes.md
-
-          echo "### Debian/Ubuntu" >> /tmp/release_notes.md
-          echo '```bash' >> /tmp/release_notes.md
-          echo "sudo apt install ./astrum_${VERSION}_amd64.deb" >> /tmp/release_notes.md
-          echo '```' >> /tmp/release_notes.md
+          
+          if [[ "${DEB_STATUS}" == "success" ]]; then
+            echo "### Debian/Ubuntu" >> /tmp/release_notes.md
+            echo '```bash' >> /tmp/release_notes.md
+            echo "sudo apt install ./astrum_${VERSION}_amd64.deb" >> /tmp/release_notes.md
+            echo '```' >> /tmp/release_notes.md
+            echo "" >> /tmp/release_notes.md
+          fi
+          
+          if [[ "${RPM_STATUS}" == "success" ]]; then
+            echo "### Fedora/RHEL" >> /tmp/release_notes.md
+            echo '```bash' >> /tmp/release_notes.md
+            echo "sudo dnf install ./astrum-${VERSION}-1.x86_64.rpm" >> /tmp/release_notes.md
+            echo '```' >> /tmp/release_notes.md
+            echo "" >> /tmp/release_notes.md
+          fi
+          
+          if [[ "${PACMAN_STATUS}" == "success" ]]; then
+            echo "### Arch Linux" >> /tmp/release_notes.md
+            echo '```bash' >> /tmp/release_notes.md
+            echo "sudo pacman -U ./astrum-${VERSION}-1-x86_64.pacman" >> /tmp/release_notes.md
+            echo '```' >> /tmp/release_notes.md
+            echo "" >> /tmp/release_notes.md
+          fi
+          
+          if [[ "${APPIMAGE_STATUS}" == "success" ]]; then
+            echo "### Universal (Any Linux)" >> /tmp/release_notes.md
+            echo '```bash' >> /tmp/release_notes.md
+            echo "chmod +x ./Astrum-${VERSION}-x86_64.AppImage" >> /tmp/release_notes.md
+            echo "./Astrum-${VERSION}-x86_64.AppImage" >> /tmp/release_notes.md
+            echo '```' >> /tmp/release_notes.md
+            echo "" >> /tmp/release_notes.md
+          fi
+          
           echo "" >> /tmp/release_notes.md
-
-          echo "### Fedora/RHEL" >> /tmp/release_notes.md
-          echo '```bash' >> /tmp/release_notes.md
-          echo "sudo dnf install ./astrum-${VERSION}-1.x86_64.rpm" >> /tmp/release_notes.md
-          echo '```' >> /tmp/release_notes.md
+          echo "## 🔐 Attestation" >> /tmp/release_notes.md
           echo "" >> /tmp/release_notes.md
-
-          echo "### Arch Linux" >> /tmp/release_notes.md
-          echo '```bash' >> /tmp/release_notes.md
-          echo "sudo pacman -U ./astrum-${VERSION}-1-x86_64.pacman" >> /tmp/release_notes.md
-          echo '```' >> /tmp/release_notes.md
+          echo "This release includes an \`attestation.json\` file with SHA256 checksums for all packages." >> /tmp/release_notes.md
+          echo "Verify package integrity:" >> /tmp/release_notes.md
           echo "" >> /tmp/release_notes.md
-
-          echo "### Universal (Any Linux)" >> /tmp/release_notes.md
           echo '```bash' >> /tmp/release_notes.md
-          echo "chmod +x ./Astrum-${VERSION}-x86_64.AppImage" >> /tmp/release_notes.md
-          echo "./Astrum-${VERSION}-x86_64.AppImage" >> /tmp/release_notes.md
+          echo "sha256sum -c attestation.json  # Extract checksums from JSON" >> /tmp/release_notes.md
           echo '```' >> /tmp/release_notes.md
-
           echo "" >> /tmp/release_notes.md
           echo "---" >> /tmp/release_notes.md
           echo "*Release created automatically by GitHub Actions*" >> /tmp/release_notes.md
-
+          
           echo "=== Release Notes ==="
           cat /tmp/release_notes.md
 
@@ -318,5 +527,6 @@ jobs:
             ./packages/*.rpm
             ./packages/*.pacman
             ./packages/*.AppImage
+            ./packages/attestation.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
