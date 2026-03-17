@@ -58,9 +58,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Инициализация dbus
 RUN dbus-uuidgen --ensure=/var/lib/dbus/machine-id
 
-# Создаём /runtime с правами 777 чтобы user 1000 мог писать
-# Это нужно для XDG_RUNTIME_DIR и dconf
-RUN mkdir -p /runtime && chmod 777 /runtime
+# Создаём /runtime с правами 700 (только владелец)
+# Это требуется для безопасности dbus (не должно быть доступно другим)
+RUN mkdir -p /runtime && chmod 700 /runtime && chown root:root /runtime
 
 # Переменные окружения для X11/Wayland
 # WSLg автоматически устанавливает WAYLAND_DISPLAY и DISPLAY
@@ -88,6 +88,7 @@ RUN if [ -d data ]; then \
 # Команда по умолчанию - запуск приложения из build директории
 # Контейнер завершается вместе с приложением
 # Запуск от root с AppArmor профилем для безопасности
+# /runtime уже создан с правами 700, создаём dconf с правильными правами
 CMD ["sh", "-c", "mkdir -p /runtime/dconf /tmp/runtime-root && \
                chmod 700 /runtime/dconf && \
                dbus-daemon --session --address=\"unix:path=/tmp/dbus-session\" --fork && \
