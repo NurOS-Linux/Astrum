@@ -53,6 +53,7 @@ services:
   # Превью сборки - запуск File Manager для тестирования
   # Контейнер не сохраняет артефакты, удаляется после завершения
   # Поддержка WSL2 (Windows 11) с Wayland/X11 и X410 (Windows)
+  # Запуск от root с AppArmor профилем для безопасности
   test:
     build:
       context: .
@@ -75,8 +76,11 @@ services:
       - ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY:-wayland-0}:/runtime/${WAYLAND_DISPLAY:-wayland-0}
       # GPU acceleration (AMD/Intel/NVIDIA)
       - /dev/dri:/dev/dri
-    # Пользователь 1000:1000 для доступа к /dev/dri
-    user: "1000:1000"
+    # AppArmor профиль для ограничения доступа контейнера
+    # Примечание: работает только на Linux с AppArmor
+    security_opt:
+      - apparmor=astrum-test
+    # Запуск от root (требуется для AppArmor и работы с /dev/dri)
     network_mode: default
     # Контейнер не перезапускается - удаляется после закрытия приложения
     restart: "no"

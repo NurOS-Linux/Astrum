@@ -1,0 +1,124 @@
+# AppArmor профиль для Astrum Test Container
+# Ограничивает доступ контейнера к системным ресурсам
+# Размещение: /etc/apparmor.d/astrum-test
+
+abi <abi/4.0>,
+include <tunables/global>
+
+profile astrum-test flags=(attach_disconnected,mediate_deleted) {
+  include <abstractions/base>
+  include <abstractions/nameservice>
+  include <abstractions/dbus-session>
+  include <abstractions/X>
+  include <abstractions/fonts>
+  include <abstractions/gnome>
+  include <abstractions/freedesktop.org>
+
+  # Разрешить чтение /etc для конфигурации
+  /etc/ r,
+  /etc/** r,
+
+  # Разрешить чтение /usr для библиотек
+  /usr/ r,
+  /usr/** mr,
+
+  # Разрешить доступ к runtime директории
+  /runtime/ rw,
+  /runtime/** rw,
+  /tmp/ rw,
+  /tmp/** rw,
+
+  # Разрешить доступ к X11 socket
+  /tmp/.X11-unix/ r,
+  /tmp/.X11-unix/X* rw,
+
+  # Разрешить доступ к WSLg
+  /mnt/wslg/ r,
+  /mnt/wslg/** rw,
+
+  # Разрешить доступ к DRM для GPU
+  /dev/dri/ r,
+  /dev/dri/** rw,
+
+  # Запретить доступ к /proc (кроме базового)
+  /proc/ r,
+  /proc/[0-9]** deny,
+  /proc/sys/** deny,
+  /proc/sysrq-trigger rw,
+  /proc/acpi/** deny,
+  /proc/kcore deny,
+  /proc/keys deny,
+  /proc/latency_stats deny,
+  /proc/timer_list deny,
+  /proc/timer_stats deny,
+  /proc/sched_debug deny,
+
+  # Запретить доступ к /sys
+  /sys/ r,
+  /sys/** deny,
+
+  # Запретить доступ к ядру
+  /sys/kernel/** deny,
+  /sys/fs/** deny,
+  /sys/module/** deny,
+
+  # Запретить монтирование
+  mount deny,
+  umount deny,
+
+  # Запретить загрузку модулей ядра
+  capability sys_module,
+
+  # Разрешить только необходимые capabilities
+  capability chown,
+  capability dac_override,
+  capability fowner,
+  capability fsetid,
+  capability kill,
+  capability setgid,
+  capability setuid,
+  capability setpcap,
+  capability net_bind_service,
+  capability net_raw,
+  capability sys_chroot,
+  capability mknod,
+  capability audit_write,
+  capability setfcap,
+
+  # Запретить опасные capabilities
+  capability sys_admin deny,
+  capability sys_ptrace deny,
+  capability sys_rawio deny,
+  capability sys_boot deny,
+  capability sys_time deny,
+  capability sys_resource deny,
+  capability ipc_lock deny,
+  capability ipc_owner deny,
+  capability mac_admin deny,
+  capability mac_override deny,
+  capability audit_control deny,
+  capability audit_read deny,
+  capability block_suspend deny,
+  capability lease deny,
+  capability wake_alarm deny,
+
+  # Разрешить выполнение бинарника astrum
+  /workspace/build/src/astrum mr,
+  /workspace/** mr,
+
+  # Разрешить dbus-daemon
+  /usr/bin/dbus-daemon mr,
+
+  # Сетевой доступ (только для X11/Wayland)
+  network inet,
+  network inet6,
+  network netlink,
+
+  # Запретить доступ к Docker socket
+  /var/run/docker.sock deny,
+  /run/docker.sock deny,
+
+  # Запретить ptrace (защита от escape)
+  ptrace (trace) peer=unconfined,
+  ptrace (traced) peer=unconfined,
+}

@@ -87,8 +87,9 @@ RUN if [ -d data ]; then \
 
 # Команда по умолчанию - запуск приложения из build директории
 # Контейнер завершается вместе с приложением
-# /runtime уже создан с правами 777, создаём только dconf
-CMD ["sh", "-c", "mkdir -p /runtime/dconf && chmod 777 /runtime/dconf && mkdir -p /tmp/runtime-root && \
+# Запуск от root с AppArmor профилем для безопасности
+CMD ["sh", "-c", "mkdir -p /runtime/dconf /tmp/runtime-root && \
+               chmod 700 /runtime/dconf && \
                dbus-daemon --session --address=\"unix:path=/tmp/dbus-session\" --fork && \
                GSETTINGS_SCHEMA_DIR=./data \
                DBUS_SESSION_BUS_ADDRESS=\"unix:path=/tmp/dbus-session\" \
