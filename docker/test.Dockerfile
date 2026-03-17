@@ -44,7 +44,6 @@ RUN xbps-install -Suy && \
     # Шрифты для корректного отображения текста
     noto-fonts-ttf \
     noto-fonts-emoji \
-    urw-fonts \
     fontconfig \
     # Утилиты для отладки
     libvulkan \
