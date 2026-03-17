@@ -11,8 +11,9 @@ on:
       - 'v*.*.*-rc*'  # Pre-release теги: v1.0.0-rc1, v1.2.3-rc2, etc.
 
 permissions:
-  contents: write     # Для создания релизов и загрузки артефактов
-  attestations: write # Для аттестаций
+  contents: write          # Для создания релизов и загрузки артефактов
+  id-token: write          # Для attest-build-provenance
+  attestations: write      # Для аттестаций
 
 env:
   REGISTRY: ghcr.io
@@ -237,6 +238,17 @@ jobs:
           
           echo "=== Generated attestation.json ==="
           cat ./artifacts/attestation.json
+
+      # Официальная аттестация GitHub
+      - name: Attest build provenance
+        id: attest
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: |
+            ./artifacts/*.deb
+            ./artifacts/*.rpm
+            ./artifacts/*.pacman
+            ./artifacts/*.AppImage
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -528,5 +540,6 @@ jobs:
             ./packages/*.pacman
             ./packages/*.AppImage
             ./packages/attestation.json
+            ./**/*.sigstore.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -56,11 +56,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Инициализация dbus и создание runtime директории
-RUN dbus-uuidgen --ensure=/var/lib/dbus/machine-id && \
-    mkdir -p /runtime && \
-    mkdir -p /runtime/dconf && \
-    chmod 700 /runtime && \
-    chmod 777 /runtime/dconf
+# NOTE: /runtime/dconf создаётся в CMD перед запуском приложения
+RUN dbus-uuidgen --ensure=/var/lib/dbus/machine-id
 
 # Переменные окружения для X11/Wayland
 # WSLg автоматически устанавливает WAYLAND_DISPLAY и DISPLAY
@@ -87,6 +84,7 @@ RUN if [ -d data ]; then \
 
 # Команда по умолчанию - запуск приложения из build директории
 # Контейнер завершается вместе с приложением
+# Создаём /runtime и /runtime/dconf перед запуском (для user 1000:1000)
 CMD ["sh", "-c", "mkdir -p /runtime/dconf && chmod 777 /runtime/dconf && mkdir -p /tmp/runtime-root && \
                dbus-daemon --session --address=\"unix:path=/tmp/dbus-session\" --fork && \
                GSETTINGS_SCHEMA_DIR=./data \
