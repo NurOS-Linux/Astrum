@@ -48,10 +48,7 @@ COPY . .
 ARG VERSION=0.0.1
 ENV VERSION=${VERSION}
 
-# Сборка проекта с оптимизациями
-ENV CFLAGS="-march=x86-64-v3 -O2 -flto=auto -ffat-lto-objects"
-ENV CXXFLAGS="-march=x86-64-v3 -O2 -flto=auto -ffat-lto-objects"
-
+# Сборка проекта (флаги -march=x86-64-v3, -O2, -flto уже в meson.build)
 RUN meson setup build \
     && meson compile -C build \
     && DESTDIR=/workspace/AppDir/usr meson install -C build
