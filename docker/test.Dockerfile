@@ -25,10 +25,9 @@ RUN zypper refresh && \
     libgtk-4-1 \
     libadwaita-1-0 \
     # Mesa OpenGL/GLX/EGL/GBM для аппаратного ускорения
-    libglvnd \
-    libglx1 \
+    libglvnd-glx \
+    libglvnd-egl \
     libdrm2 \
-    libEGL1 \
     libgbm1 \
     # X11 библиотеки
     libX11-6 \
@@ -48,7 +47,7 @@ RUN zypper refresh && \
     fontconfig \
     # Утилиты для отладки
     libvulkan1 \
-    libGL1 \
+    libglvnd-glx \
     mold \
     && zypper --non-interactive clean
 
