@@ -21,7 +21,6 @@ RUN xbps-install -Suy && \
     gettext \
     desktop-file-utils \
     git \
-    ca-certificates \
     dbus \
     # Runtime GTK4 и LibAdwaita
     gtk4 \
@@ -46,7 +45,7 @@ RUN xbps-install -Suy && \
     noto-fonts-emoji \
     fontconfig \
     # Утилиты для отладки
-    libvulkan \
+    vulkan-loader \
     # Для работы dbus
     dbus-libs
 
