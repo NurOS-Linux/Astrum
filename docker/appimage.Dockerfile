@@ -28,6 +28,7 @@ RUN apt-get install -y --no-install-recommends \
     ca-certificates \
     wget \
     fuse \
+    mold \
     && rm -rf /var/lib/apt/lists/*
 
 # Загрузка linuxdeploy и плагина GTK4

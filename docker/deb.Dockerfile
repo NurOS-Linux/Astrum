@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     debhelper \
     git \
     ca-certificates \
+    mold \
     && rm -rf /var/lib/apt/lists/*
 
 # Рабочая директория

@@ -17,6 +17,7 @@ RUN pacman-key --init && \
     gettext \
     desktop-file-utils \
     git \
+    mold \
     && pacman -Scc --noconfirm
 
 # Настройка пользователя для makepkg (требуется не-root)

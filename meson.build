@@ -8,8 +8,13 @@ project('astrum', 'vala', 'c',
   default_options: [
     'warning_level=2',
     'werror=false',
+    'b_lto=true',
+    'b_lto_mode=thin',
   ],
 )
+
+# Использование mold линкера для ускорения сборки
+add_project_link_arguments('-fuse-ld=mold', language: 'c')
 
 app_id = 'org.aetherde.Astrum'
 app_name = 'Astrum'

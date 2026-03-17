@@ -20,6 +20,7 @@ RUN dnf install -y \
     rpm-build \
     rpmdevtools \
     git \
+    mold \
     && dnf clean all
 
 # Рабочая директория

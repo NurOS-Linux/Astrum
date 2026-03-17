@@ -53,6 +53,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Утилиты для отладки
     libvulkan1 \
     mesa-vulkan-drivers \
+    mold \
     && rm -rf /var/lib/apt/lists/*
 
 # Инициализация dbus и создание runtime директории
