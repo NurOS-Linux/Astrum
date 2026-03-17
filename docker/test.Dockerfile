@@ -2,21 +2,21 @@
 # Контейнер для быстрой проверки сборки и запуска приложения
 # Не сохраняет артефакты - всё удаляется после завершения контейнера
 # Поддержка WSL2 (Windows 11) с Wayland/X11
-# Base: Wolfi Dev (rolling, Alpine с glibc, GTK4/Vala из коробки)
+# Base: Void Linux (glibc, rolling, свежие GTK4/Vala)
 
-FROM cgr.dev/chainguard/wolfi-base:latest
+FROM docker.io/voidlinux/voidlinux:glibc
 
 # Установка зависимостей
 # Runtime библиотеки для GTK4, Mesa (GLX/EGL/GBM), шрифты
-RUN apk add --no-cache \
+RUN xbps-install -Suy && \
+    xbps-install -y \
     vala \
     meson \
     ninja \
-    base \
-    build-base \
-    gtk4-dev \
-    libadwaita-dev \
-    glib-dev \
+    gcc \
+    gtk4-devel \
+    libadwaita-devel \
+    glib-devel \
     gettext \
     desktop-file-utils \
     git \
@@ -30,19 +30,19 @@ RUN apk add --no-cache \
     libdrm \
     libgbm \
     # X11 библиотеки
-    libx11 \
-    libxext \
-    libxrender \
-    libxtst \
-    libxi \
-    libxcursor \
-    libxcomposite \
-    libxdamage \
-    libxfixes \
-    libxrandr \
+    libX11 \
+    libXext \
+    libXrender \
+    libXtst \
+    libXi \
+    libXcursor \
+    libXcomposite \
+    libXdamage \
+    libXfixes \
+    libXrandr \
     # Шрифты для корректного отображения текста
-    google-noto \
-    google-noto-emoji \
+    google-noto-fonts-ttf \
+    google-noto-emoji-fonts \
     urw-fonts \
     fontconfig \
     # Утилиты для отладки
