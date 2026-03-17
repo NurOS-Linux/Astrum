@@ -42,8 +42,8 @@ RUN xbps-install -Suy && \
     libXfixes \
     libXrandr \
     # Шрифты для корректного отображения текста
-    google-noto-fonts-ttf \
-    google-noto-emoji-fonts \
+    noto-fonts-ttf \
+    noto-fonts-emoji \
     urw-fonts \
     fontconfig \
     # Утилиты для отладки
