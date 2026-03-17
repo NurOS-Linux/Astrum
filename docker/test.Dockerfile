@@ -10,10 +10,11 @@ FROM docker.io/voidlinux/voidlinux:glibc
 # Runtime библиотеки для GTK4, Mesa (GLX/EGL/GBM), шрифты
 RUN xbps-install -Suy && \
     xbps-install -y \
+    base-devel \
+    mold \
     vala \
     meson \
     ninja \
-    gcc \
     gtk4-devel \
     libadwaita-devel \
     glib-devel \
@@ -47,7 +48,6 @@ RUN xbps-install -Suy && \
     fontconfig \
     # Утилиты для отладки
     libvulkan \
-    mold \
     # Для работы dbus
     dbus-libs
 
