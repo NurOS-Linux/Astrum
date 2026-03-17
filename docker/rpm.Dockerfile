@@ -37,19 +37,14 @@ ENV VERSION=${VERSION}
 # Сборка проекта
 RUN meson setup build \
     && meson compile -C build \
-    && DESTDIR=/workspace/install meson install -C build
+    && DESTDIR=/workspace/rpmbuild/BUILD/astrum-${VERSION}-build/BUILDROOT meson install -C build
 
 # Создание структуры RPM пакета
 RUN mkdir -p /workspace/rpmbuild/BUILD \
     && mkdir -p /workspace/rpmbuild/RPMS \
     && mkdir -p /workspace/rpmbuild/SOURCES \
     && mkdir -p /workspace/rpmbuild/SPECS \
-    && mkdir -p /workspace/rpmbuild/SRPM \
-    && mkdir -p /workspace/rpmbuild/BUILDROOT
-
-# Копирование установленных файлов в BUILDROOT
-RUN mkdir -p /workspace/rpmbuild/BUILDROOT/astrum-${VERSION}-1.x86_64/usr \
-    && cp -r /workspace/install/* /workspace/rpmbuild/BUILDROOT/astrum-${VERSION}-1.x86_64/usr/
+    && mkdir -p /workspace/rpmbuild/SRPM
 
 # Создание spec файла
 RUN echo "Name:           astrum" > /workspace/rpmbuild/SPECS/astrum.spec \
