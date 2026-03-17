@@ -2,58 +2,57 @@
 # Контейнер для быстрой проверки сборки и запуска приложения
 # Не сохраняет артефакты - всё удаляется после завершения контейнера
 # Поддержка WSL2 (Windows 11) с Wayland/X11
+# Base: openSUSE Tumbleweed (rolling, GTK4/Vala из коробки)
 
-FROM ubuntu:noble
+FROM opensuse/tumbleweed:latest
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Обновление и установка зависимостей
+# Установка зависимостей
 # Runtime библиотеки для GTK4, Mesa (GLX/EGL/GBM), шрифты
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    valac \
+RUN zypper refresh && \
+    zypper --non-interactive install \
+    vala \
     meson \
-    ninja-build \
-    build-essential \
-    libgtk-4-dev \
-    libadwaita-1-dev \
-    libglib2.0-dev \
+    ninja \
+    gtk4-devel \
+    libadwaita-devel \
+    glib2-devel \
     gettext \
     desktop-file-utils \
     git \
     ca-certificates \
-    dbus \
-    dbus-x11 \
+    dbus-1 \
+    dbus-1-x11 \
     # Runtime GTK4 и LibAdwaita
     libgtk-4-1 \
     libadwaita-1-0 \
     # Mesa OpenGL/GLX/EGL/GBM для аппаратного ускорения
-    libgl1 \
+    libglvnd \
     libglx0 \
-    libglx-mesa0 \
-    libgl1-mesa-dri \
-    libegl1 \
+    libMesaDRM2 \
+    libdrm2 \
+    libEGL1 \
     libgbm1 \
     # X11 библиотеки
-    libx11-6 \
-    libxext6 \
-    libxrender1 \
-    libxtst6 \
-    libxi6 \
-    libxcursor1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
+    libX11-6 \
+    libXext6 \
+    libXrender1 \
+    libXtst6 \
+    libXi6 \
+    libXcursor1 \
+    libXcomposite1 \
+    libXdamage1 \
+    libXfixes3 \
+    libXrandr2 \
     # Шрифты для корректного отображения текста
-    fonts-noto-core \
-    fonts-noto-color-emoji \
-    fonts-urw-base35 \
+    google-noto-fonts \
+    google-noto-color-emoji-fonts \
+    urw-fonts \
     fontconfig \
     # Утилиты для отладки
     libvulkan1 \
-    mesa-vulkan-drivers \
+    Mesa-libGL \
     mold \
-    && rm -rf /var/lib/apt/lists/*
+    && zypper --non-interactive clean
 
 # Инициализация dbus
 RUN dbus-uuidgen --ensure=/var/lib/dbus/machine-id
