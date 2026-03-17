@@ -4,7 +4,7 @@
 # Поддержка WSL2 (Windows 11) с Wayland/X11
 # Base: Void Linux (glibc, rolling, свежие GTK4/Vala)
 
-FROM docker.io/voidlinux/voidlinux:glibc
+FROM ghcr.io/void-linux/void-glibc-full:latest
 
 # Установка зависимостей
 # Runtime библиотеки для GTK4, Mesa (GLX/EGL/GBM), шрифты
