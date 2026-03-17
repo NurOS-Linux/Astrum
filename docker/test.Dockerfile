@@ -16,19 +16,17 @@ RUN zypper refresh && \
     gtk4-devel \
     libadwaita-devel \
     glib2-devel \
-    gettext \
+    gettext-runtime \
     desktop-file-utils \
     git \
     ca-certificates \
     dbus-1 \
-    dbus-1-x11 \
     # Runtime GTK4 и LibAdwaita
     libgtk-4-1 \
     libadwaita-1-0 \
     # Mesa OpenGL/GLX/EGL/GBM для аппаратного ускорения
     libglvnd \
-    libglx0 \
-    libMesaDRM2 \
+    libglx1 \
     libdrm2 \
     libEGL1 \
     libgbm1 \
@@ -44,13 +42,13 @@ RUN zypper refresh && \
     libXfixes3 \
     libXrandr2 \
     # Шрифты для корректного отображения текста
-    google-noto-fonts \
-    google-noto-color-emoji-fonts \
+    google-noto-sans-fonts \
+    google-noto-coloremoji-fonts \
     urw-fonts \
     fontconfig \
     # Утилиты для отладки
     libvulkan1 \
-    Mesa-libGL \
+    libGL1 \
     mold \
     && zypper --non-interactive clean
 
