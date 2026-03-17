@@ -51,7 +51,9 @@ RUN zypper refresh && \
     && zypper --non-interactive clean
 
 # Инициализация dbus
-RUN dbus-uuidgen --ensure=/var/lib/dbus/machine-id
+RUN rm -f /var/lib/dbus/machine-id /etc/machine-id && \
+    dbus-uuidgen --ensure=/var/lib/dbus/machine-id && \
+    ln -s /var/lib/dbus/machine-id /etc/machine-id
 
 # Создаём /runtime с правами 700 (только владелец)
 # Это требуется для безопасности dbus (не должно быть доступно другим)
