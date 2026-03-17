@@ -2,53 +2,52 @@
 # Контейнер для быстрой проверки сборки и запуска приложения
 # Не сохраняет артефакты - всё удаляется после завершения контейнера
 # Поддержка WSL2 (Windows 11) с Wayland/X11
-# Base: openSUSE Tumbleweed (rolling, GTK4/Vala из коробки)
+# Base: Wolfi Dev (rolling, Alpine с glibc, GTK4/Vala из коробки)
 
-FROM opensuse/tumbleweed:latest
+FROM cgr.dev/chainguard/wolfi-base:latest
 
 # Установка зависимостей
 # Runtime библиотеки для GTK4, Mesa (GLX/EGL/GBM), шрифты
-RUN zypper refresh && \
-    zypper --non-interactive install --no-recommends \
+RUN apk add --no-cache \
     vala \
     meson \
     ninja \
-    gtk4-devel \
-    libadwaita-devel \
-    glib2-devel \
-    gettext-runtime \
+    gtk4-dev \
+    libadwaita-dev \
+    glib-dev \
+    gettext \
     desktop-file-utils \
     git \
     ca-certificates \
-    dbus-1 \
+    dbus \
     # Runtime GTK4 и LibAdwaita
-    libgtk-4-1 \
-    libadwaita-1-0 \
+    gtk4 \
+    libadwaita \
     # Mesa OpenGL/GLX/EGL/GBM для аппаратного ускорения
     libglvnd \
-    libdrm2 \
-    libgbm1 \
+    libdrm \
+    libgbm \
     # X11 библиотеки
-    libX11-6 \
-    libXext6 \
-    libXrender1 \
-    libXtst6 \
-    libXi6 \
-    libXcursor1 \
-    libXcomposite1 \
-    libXdamage1 \
-    libXfixes3 \
-    libXrandr2 \
+    libx11 \
+    libxext \
+    libxrender \
+    libxtst \
+    libxi \
+    libxcursor \
+    libxcomposite \
+    libxdamage \
+    libxfixes \
+    libxrandr \
     # Шрифты для корректного отображения текста
-    google-noto-sans-fonts \
-    google-noto-coloremoji-fonts \
+    google-noto \
+    google-noto-emoji \
     urw-fonts \
     fontconfig \
     # Утилиты для отладки
-    libvulkan1 \
-    libglvnd \
+    libvulkan \
     mold \
-    && zypper --non-interactive clean
+    # Для работы dbus
+    dbus-libs
 
 # Инициализация dbus
 RUN rm -f /var/lib/dbus/machine-id /etc/machine-id && \
