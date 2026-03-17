@@ -7,7 +7,7 @@ FROM archlinux:base-devel
 # Обновление ключей и установка зависимостей
 RUN pacman-key --init && \
     pacman-key --populate archlinux && \
-    pacman -Syu --noconfirm \
+    pacman -Syu --noconfirm --needed \
     vala \
     meson \
     ninja \

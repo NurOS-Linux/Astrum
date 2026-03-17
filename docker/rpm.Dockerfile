@@ -8,6 +8,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Установка зависимостей для сборки
 RUN dnf install -y \
+    --setopt=install_weak_deps=False \
+    --setopt=tsflags=nodocs \
     vala \
     meson \
     ninja-build \
