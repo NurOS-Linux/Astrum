@@ -20,6 +20,10 @@ gnome = import('gnome')
 # Suppress warnings from Vala-generated C code
 add_project_arguments([
   '-std=gnu11',
+  '-march=x86-64-v3',
+  '-O2',
+  '-flto=auto',
+  '-ffat-lto-objects',
   '-Wno-unused-parameter',
   '-Wno-unused-variable',
   '-Wno-unused-but-set-variable',

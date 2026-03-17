@@ -52,21 +52,31 @@ services:
 
   # Превью сборки - запуск File Manager для тестирования
   # Контейнер не сохраняет артефакты, удаляется после завершения
-  # Поддержка X410 (Windows) и WSLg (Linux)
+  # Поддержка WSL2 (Windows 11) с Wayland/X11 и X410 (Windows)
   test:
     build:
       context: .
       dockerfile: docker/test.Dockerfile
     container_name: astrum-test
-    # X410 использует :0
-    # WSLg использует :0
+    # X410 использует :0, WSLg использует :0 и wayland-0
     environment:
       - DISPLAY=${DISPLAY:-:0}
-      - GDK_BACKEND=x11
-    # Проброс X11 сокета для Linux/WSLg
-    # Для Windows с X410 этот volume игнорируется
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-0}
+      - XDG_RUNTIME_DIR=/runtime
+      - GDK_BACKEND=wayland,x11
+      - GSK_RENDERER=cairo
+      - GTK_A11Y=none
+    # Проброс сокетов для графической подсистемы
     volumes:
+      # X11 socket
       - /tmp/.X11-unix:/tmp/.X11-unix
+      # WSLg Wayland socket и runtime
+      - /mnt/wslg:/mnt/wslg:ro
+      - ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY:-wayland-0}:/runtime/${WAYLAND_DISPLAY:-wayland-0}
+      # GPU acceleration (AMD/Intel/NVIDIA)
+      - /dev/dri:/dev/dri
+    # Пользователь 1000:1000 для доступа к /dev/dri
+    user: "1000:1000"
     network_mode: default
     # Контейнер не перезапускается - удаляется после закрытия приложения
     restart: "no"

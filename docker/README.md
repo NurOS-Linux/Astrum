@@ -7,8 +7,8 @@ docker/
 ├── deb.Dockerfile       # Сборка .deb пакетов (Debian Trixie, Ubuntu 24.04+)
 ├── rpm.Dockerfile       # Сборка .rpm пакетов (Fedora 41+)
 ├── pacman.Dockerfile    # Сборка .pacman пакетов (Arch Linux)
-├── appimage.Dockerfile  # Сборка .AppImage (Ubuntu 22.04, универсальный)
-├── test.Dockerfile      # Превью сборки для тестирования GUI
+├── appimage.Dockerfile  # Сборка .AppImage (Ubuntu 20.04, универсальный glibc 2.31+)
+├── test.Dockerfile      # Превью сборки для тестирования GUI (WSL2/Wayland/X11)
 └── README.md            # Этот файл
 ```
 
@@ -124,4 +124,20 @@ podman-compose build appimage-builder
 | `.deb` | Debian, Ubuntu | Debian 13+ (Trixie), Ubuntu 24.04+ |
 | `.rpm` | Fedora, RHEL | Fedora 41+, RHEL 9+ |
 | `.pacman` | Arch Linux | Любая |
-| `.AppImage` | Любой Linux | Ядро 4.4+, glibc 2.31+ |
+| `.AppImage` | Любой Linux | glibc 2.31+ (Ubuntu 20.04+, Debian 11+, Fedora 33+) |
+
+## Требования к CPU
+
+Для скомпилированных бинарников требуется поддержка **x86-64-v3** (Intel Haswell 2013+, AMD Excavator 2015+):
+
+- Intel: Haswell (4-е поколение, 2013+) или новее
+- AMD: Excavator (2015+) или Zen (2017+) или новее
+- Требуемые инструкции: AVX, AVX2, FMA, F16C
+
+**Минимальные модели:**
+- Intel: Core i3/i5/i7-4xxx (Haswell), Pentium/Celeron G3xxx
+- AMD: A8/A10-7xxxK, FX-7xxx, Athlon X4 8xx
+
+**Не поддерживаются:**
+- Intel: Sandy Bridge, Ivy Bridge (до 2013)
+- AMD: Bulldozer, Piledriver, Steamroller (до 2015)
