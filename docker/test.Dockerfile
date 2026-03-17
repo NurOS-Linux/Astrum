@@ -32,7 +32,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglx-mesa0 \
     libgl1-mesa-dri \
     libegl1 \
-    libegl1-mesa \
     libgbm1 \
     # X11 библиотеки
     libx11-6 \
