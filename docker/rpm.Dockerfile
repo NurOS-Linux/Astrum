@@ -9,7 +9,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Установка зависимостей для сборки
 RUN dnf install -y \
     vala \
-    vala-tools \
     meson \
     ninja-build \
     gtk4-devel \

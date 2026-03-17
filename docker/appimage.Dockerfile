@@ -1,15 +1,14 @@
 # Dockerfile для сборки .AppImage пакетов Astrum
-# Base: appimagecrafters/ubuntu-20.04 (glibc 2.31, PPA со свежими GTK4/LibAdwaita)
-# Совместимость: Любой Linux с glibc 2.31+ (Ubuntu 20.04+, Debian 11+, Fedora 33+)
+# Base: ubuntu:22.04 (glibc 2.35, свежие GTK4/LibAdwaita)
+# Совместимость: Любой Linux с glibc 2.31+
 
-FROM appimagecrafters/ubuntu-20.04:latest
+FROM ubuntu:jammy
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Добавление PPA для свежих GTK4 и LibAdwaita
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
-    && add-apt-repository ppa:ubuntu-toolchain-r/test \
     && add-apt-repository ppa:ubuntuhandbook1/apps \
     && apt-get update
 
