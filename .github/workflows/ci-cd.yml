@@ -93,9 +93,11 @@ jobs:
           echo "Extracting deb artifact..."
           CONTAINER_ID=$(podman create --name astrum-deb-${{ github.run_id }} astrum-deb-builder 2>/dev/null || echo "")
           if [ -n "${CONTAINER_ID}" ]; then
-            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
+            podman cp ${CONTAINER_ID}:/workspace/artifacts ./artifacts 2>/dev/null || true
             podman rm ${CONTAINER_ID} 2>/dev/null || true
           fi
+          echo "Contents of ./artifacts after copy:"
+          ls -la ./artifacts/ || true
           
           echo "=== .deb build completed at $(date) ==="
           ls -la ./artifacts/*.deb 2>/dev/null || echo "No .deb artifacts found"
@@ -115,9 +117,11 @@ jobs:
           echo "Extracting rpm artifact..."
           CONTAINER_ID=$(podman create --name astrum-rpm-${{ github.run_id }} astrum-rpm-builder 2>/dev/null || echo "")
           if [ -n "${CONTAINER_ID}" ]; then
-            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
+            podman cp ${CONTAINER_ID}:/workspace/artifacts ./artifacts 2>/dev/null || true
             podman rm ${CONTAINER_ID} 2>/dev/null || true
           fi
+          echo "Contents of ./artifacts after copy:"
+          ls -la ./artifacts/ || true
           
           echo "=== .rpm build completed at $(date) ==="
           ls -la ./artifacts/*.rpm 2>/dev/null || echo "No .rpm artifacts found"
@@ -137,9 +141,11 @@ jobs:
           echo "Extracting pacman artifact..."
           CONTAINER_ID=$(podman create --name astrum-pkg-${{ github.run_id }} astrum-pkg-builder 2>/dev/null || echo "")
           if [ -n "${CONTAINER_ID}" ]; then
-            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
+            podman cp ${CONTAINER_ID}:/workspace/artifacts ./artifacts 2>/dev/null || true
             podman rm ${CONTAINER_ID} 2>/dev/null || true
           fi
+          echo "Contents of ./artifacts after copy:"
+          ls -la ./artifacts/ || true
           
           echo "=== .pacman build completed at $(date) ==="
           ls -la ./artifacts/*.pacman 2>/dev/null || echo "No .pacman artifacts found"
@@ -159,9 +165,11 @@ jobs:
           echo "Extracting appimage artifact..."
           CONTAINER_ID=$(podman create --name astrum-appimage-${{ github.run_id }} astrum-appimage-builder 2>/dev/null || echo "")
           if [ -n "${CONTAINER_ID}" ]; then
-            podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
+            podman cp ${CONTAINER_ID}:/workspace/artifacts ./artifacts 2>/dev/null || true
             podman rm ${CONTAINER_ID} 2>/dev/null || true
           fi
+          echo "Contents of ./artifacts after copy:"
+          ls -la ./artifacts/ || true
           
           echo "=== .AppImage build completed at $(date) ==="
           ls -la ./artifacts/*.AppImage 2>/dev/null || echo "No .AppImage artifacts found"
