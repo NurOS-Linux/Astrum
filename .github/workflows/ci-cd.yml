@@ -11,9 +11,10 @@ on:
       - 'v*.*.*-rc*'  # Pre-release теги: v1.0.0-rc1, v1.2.3-rc2, etc.
 
 permissions:
-  contents: write          # Для создания релизов и загрузки артефактов
-  id-token: write          # Для attest-build-provenance
-  attestations: write      # Для аттестаций
+  contents: read           # Для checkout
+  id-token: write          # Для actions/attest@v4 (Sigstore OIDC)
+  attestations: write      # Для загрузки аттестаций
+  artifact-metadata: write # Для storage records
 
 env:
   REGISTRY: ghcr.io
@@ -239,22 +240,26 @@ jobs:
           echo "=== Generated attestation.json ==="
           cat ./artifacts/attestation.json
 
-      # Официальная аттестация GitHub
+      # Официальная аттестация GitHub (actions/attest@v4)
+      # Генерирует SLSA provenance аттестацию для всех артефактов
       - name: Attest build provenance
         id: attest
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest@v4
         with:
           subject-path: |
             ./artifacts/*.deb
             ./artifacts/*.rpm
             ./artifacts/*.pacman
             ./artifacts/*.AppImage
+          show-summary: true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: packages
-          path: artifacts/*
+          path: |
+            artifacts/*
+            ${{ steps.attest.outputs.bundle-path }}
           retention-days: 7
 
   # Создание релиза на GitHub
@@ -262,6 +267,8 @@ jobs:
     name: Create GitHub Release
     needs: build-packages
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Для создания релиза
 
     steps:
       - name: Checkout repository
@@ -540,6 +547,6 @@ jobs:
             ./packages/*.pacman
             ./packages/*.AppImage
             ./packages/attestation.json
-            ./**/*.sigstore.json
+            ./packages/*.sigstore.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
