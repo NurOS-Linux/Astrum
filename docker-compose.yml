@@ -10,7 +10,7 @@ services:
       args:
         VERSION: ${VERSION:-0.0.1}
     volumes:
-      - artifacts:/workspace/artifacts
+      - ./artifacts:/workspace/artifacts
     platform: linux/amd64
 
   # Сборка .rpm для Fedora
@@ -21,7 +21,7 @@ services:
       args:
         VERSION: ${VERSION:-0.0.1}
     volumes:
-      - artifacts:/workspace/artifacts
+      - ./artifacts:/workspace/artifacts
     platform: linux/amd64
 
   # Сборка .pacman для Arch Linux
@@ -32,7 +32,7 @@ services:
       args:
         VERSION: ${VERSION:-0.0.1}
     volumes:
-      - artifacts:/workspace/artifacts
+      - ./artifacts:/workspace/artifacts
     platform: linux/amd64
 
   # Сборка .AppImage (универсальный пакет для Linux)
@@ -43,7 +43,7 @@ services:
       args:
         VERSION: ${VERSION:-0.0.1}
     volumes:
-      - artifacts:/workspace/artifacts
+      - ./artifacts:/workspace/artifacts
     platform: linux/amd64
 
   # Превью сборки - запуск File Manager для тестирования

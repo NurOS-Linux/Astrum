@@ -89,10 +89,6 @@ jobs:
 
           echo "Building and running deb-builder..."
           podman-compose -f docker-compose.yml run -T --rm deb-builder 2>&1 || true
-          
-          # Копируем артефакты из docker volume
-          podman run --rm -v artifacts:/src -v ${{ github.workspace }}/artifacts:/out \
-            alpine sh -c "cp -r /src/* /out/ || true" 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -111,10 +107,6 @@ jobs:
 
           echo "Building and running rpm-builder..."
           podman-compose -f docker-compose.yml run -T --rm rpm-builder 2>&1 || true
-          
-          # Копируем артефакты из docker volume
-          podman run --rm -v artifacts:/src -v ${{ github.workspace }}/artifacts:/out \
-            alpine sh -c "cp -r /src/* /out/ || true" 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -133,10 +125,6 @@ jobs:
 
           echo "Building and running pkg-builder..."
           podman-compose -f docker-compose.yml run -T --rm pkg-builder 2>&1 || true
-          
-          # Копируем артефакты из docker volume
-          podman run --rm -v artifacts:/src -v ${{ github.workspace }}/artifacts:/out \
-            alpine sh -c "cp -r /src/* /out/ || true" 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -155,10 +143,6 @@ jobs:
 
           echo "Building and running appimage-builder..."
           podman-compose -f docker-compose.yml run -T --rm appimage-builder 2>&1 || true
-          
-          # Копируем артефакты из docker volume
-          podman run --rm -v artifacts:/src -v ${{ github.workspace }}/artifacts:/out \
-            alpine sh -c "cp -r /src/* /out/ || true" 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
