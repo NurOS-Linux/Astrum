@@ -1,34 +1,41 @@
 # Dockerfile для сборки .AppImage пакетов Astrum
-# Base: ubuntu:22.04 (glibc 2.35, свежие GTK4/LibAdwaita)
+# Base: Alpine 3.21 (cutting edge, GTK4 из репозитория Alpine)
+# Статическая линковка: libc, libgcc, libstdc++
 # Совместимость: Любой Linux с glibc 2.31+
 
-FROM ubuntu:jammy
+FROM alpine:3.21
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Добавление PPA для свежих GTK4 и LibAdwaita
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    && add-apt-repository ppa:ubuntuhandbook1/apps \
-    && apt-get update
+ENV APK_REPOSITORIES="https://dl-cdn.alpinelinux.org/alpine/v3.21/main\nhttps://dl-cdn.alpinelinux.org/alpine/v3.21/community"
 
 # Установка зависимостей для сборки
-RUN apt-get install -y --no-install-recommends \
-    valac \
+RUN apk add --no-cache \
+    vala \
     meson \
-    ninja-build \
-    build-essential \
-    libgtk-4-dev \
-    libadwaita-1-dev \
-    libglib2.0-dev \
+    ninja \
+    build-base \
+    glib-dev \
+    gtk4.0-dev \
+    libadwaita-dev \
     gettext \
     desktop-file-utils \
     git \
     ca-certificates \
     wget \
     fuse \
+    fuse-dev \
+    patchelf \
     mold \
-    && rm -rf /var/lib/apt/lists/*
+    # Статические библиотеки для линковки
+    musl-dev \
+    libgcc \
+    libstdc++ \
+    glib-static \
+    && rm -rf /var/cache/apk/*
+
+# Загрузка appimagetool (нет в репозитории Alpine 3.21)
+RUN wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage \
+    -O /usr/local/bin/appimagetool && \
+    chmod +x /usr/local/bin/appimagetool
 
 # Загрузка linuxdeploy и плагина GTK4
 RUN wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
@@ -48,8 +55,20 @@ COPY . .
 ARG VERSION=0.0.1
 ENV VERSION=${VERSION}
 
-# Сборка проекта (флаги -march=x86-64-v3, -O2, -flto уже в meson.build)
+# Флаги для статической линковки
+# -static: статическая линковка libc (musl)
+# -static-libgcc: статическая линковка libgcc
+# -Wl,-Bstatic: линковать следующие библиотеки статически
+# -fuse-ld=mold: быстрый линкер mold (требуется для LTO в meson.build)
+ENV CFLAGS="-O2 -march=x86-64-v3 -flto=auto -ffat-lto-objects"
+ENV CXXFLAGS="-O2 -march=x86-64-v3 -flto=auto -ffat-lto-objects -static-libgcc"
+ENV LDFLAGS="-fuse-ld=mold -static -static-libgcc -Wl,-Bstatic -lglib-2.0 -Wl,-Bdynamic"
+
+# Сборка проекта
 RUN meson setup build \
+    -Dbuildtype=release \
+    -Db_lto=true \
+    -Db_lto_mode=thin \
     && meson compile -C build \
     && DESTDIR=/workspace/AppDir/usr meson install -C build
 
@@ -91,6 +110,7 @@ RUN cp /workspace/AppDir/usr/share/applications/org.aetherde.Astrum.desktop /wor
 RUN cp /workspace/AppDir/usr/share/icons/hicolor/scalable/apps/org.aetherde.Astrum.svg /workspace/AppDir/org.aetherde.Astrum.svg
 
 # Создание AppImage через linuxdeploy с плагином GTK4
+# --exclude-library: исключение библиотек, которые будут прилинкованы статически
 WORKDIR /workspace
 RUN VERSION=${VERSION} linuxdeploy \
     --appdir AppDir \
@@ -99,8 +119,14 @@ RUN VERSION=${VERSION} linuxdeploy \
     --desktop-file=AppDir/org.aetherde.Astrum.desktop \
     --icon-file=AppDir/org.aetherde.Astrum.svg \
     --executable=AppDir/usr/bin/astrum \
-    --library=AppDir/usr/lib/x86_64-linux-gnu/libgtk-4.so.1 \
-    --library=AppDir/usr/lib/x86_64-linux-gnu/libadwaita-1.so.0
+    --exclude-library=libc.so.6 \
+    --exclude-library=libm.so.6 \
+    --exclude-library=libpthread.so.0 \
+    --exclude-library=libgcc_s.so.1 \
+    --exclude-library=libstdc++.so.6 \
+    --exclude-library=libglib-2.0.so.0 \
+    --exclude-library=libgobject-2.0.so.0 \
+    --exclude-library=libgio-2.0.so.0
 
 # Перемещение артефакта
 RUN mkdir -p /workspace/artifacts && \

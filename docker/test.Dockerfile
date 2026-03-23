@@ -6,7 +6,17 @@
 
 FROM ghcr.io/void-linux/void-glibc-full:latest
 
-# Установка зависимостей
+# Настройка зеркала XBPS (российское зеркало Яндекса)
+# Зеркало передается через переменную окружения XBPS_MIRROR
+ARG XBPS_MIRROR=https://mirror.yandex.ru/voidlinux
+
+# Инициализация зеркала в конфигурации xbps
+# Используем прямой URL без bash-парсинга
+RUN mkdir -p /etc/xbps.d && \
+    echo "repository=https://mirror.yandex.ru/voidlinux/current" > /etc/xbps.d/00-repository-main.conf && \
+    echo "repository=https://mirror.yandex.ru/voidlinux/current/multilib" > /etc/xbps.d/00-repository-multilib.conf
+
+# Обновление системы и установка зависимостей
 # Runtime библиотеки для GTK4, Mesa (GLX/EGL/GBM), шрифты
 RUN xbps-install -Suy && \
     xbps-install -y \
@@ -44,10 +54,12 @@ RUN xbps-install -Suy && \
     noto-fonts-ttf \
     noto-fonts-emoji \
     fontconfig \
-    # Утилиты для отладки
-    vulkan-loader \
     # Для работы dbus
-    dbus-libs
+    dbus-libs && \
+    # Очистка кеша xbps для уменьшения размера образа
+    xbps-remove -O && \
+    rm -rf /var/cache/xbps/* && \
+    rm -rf /var/db/xbps/alternatives.d/*
 
 # Инициализация dbus
 RUN rm -f /var/lib/dbus/machine-id /etc/machine-id && \

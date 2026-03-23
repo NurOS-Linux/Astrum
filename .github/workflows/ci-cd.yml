@@ -83,22 +83,22 @@ jobs:
         id: build-deb
         continue-on-error: true
         run: |
+          set -e
           echo "=== Starting .deb build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
-          
+
           echo "Building deb with version: ${VERSION}"
           podman-compose -f docker-compose.yml build deb-builder
-          
-          echo "Extracting deb artifact..."
-          CONTAINER_ID=$(podman create --name astrum-deb-${{ github.run_id }} astrum-deb-builder 2>/dev/null || echo "")
-          if [ -n "${CONTAINER_ID}" ]; then
-            podman cp ${CONTAINER_ID}:/workspace/artifacts ./artifacts 2>/dev/null || true
-            podman rm ${CONTAINER_ID} 2>/dev/null || true
-          fi
-          echo "Contents of ./artifacts after copy:"
+
+          echo "Running deb-builder container to generate artifacts..."
+          podman run --rm --name astrum-deb-${{ github.run_id }} \
+            -v ./artifacts:/workspace/artifacts:Z \
+            astrum-deb-builder 2>&1 || true
+
+          echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
-          
+
           echo "=== .deb build completed at $(date) ==="
           ls -la ./artifacts/*.deb 2>/dev/null || echo "No .deb artifacts found"
 
@@ -107,22 +107,22 @@ jobs:
         id: build-rpm
         continue-on-error: true
         run: |
+          set -e
           echo "=== Starting .rpm build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
-          
+
           echo "Building rpm with version: ${VERSION}"
           podman-compose -f docker-compose.yml build rpm-builder
-          
-          echo "Extracting rpm artifact..."
-          CONTAINER_ID=$(podman create --name astrum-rpm-${{ github.run_id }} astrum-rpm-builder 2>/dev/null || echo "")
-          if [ -n "${CONTAINER_ID}" ]; then
-            podman cp ${CONTAINER_ID}:/workspace/artifacts ./artifacts 2>/dev/null || true
-            podman rm ${CONTAINER_ID} 2>/dev/null || true
-          fi
-          echo "Contents of ./artifacts after copy:"
+
+          echo "Running rpm-builder container to generate artifacts..."
+          podman run --rm --name astrum-rpm-${{ github.run_id }} \
+            -v ./artifacts:/workspace/artifacts:Z \
+            astrum-rpm-builder 2>&1 || true
+
+          echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
-          
+
           echo "=== .rpm build completed at $(date) ==="
           ls -la ./artifacts/*.rpm 2>/dev/null || echo "No .rpm artifacts found"
 
@@ -131,22 +131,22 @@ jobs:
         id: build-pacman
         continue-on-error: true
         run: |
+          set -e
           echo "=== Starting .pacman build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
-          
+
           echo "Building pacman with version: ${VERSION}"
           podman-compose -f docker-compose.yml build pkg-builder
-          
-          echo "Extracting pacman artifact..."
-          CONTAINER_ID=$(podman create --name astrum-pkg-${{ github.run_id }} astrum-pkg-builder 2>/dev/null || echo "")
-          if [ -n "${CONTAINER_ID}" ]; then
-            podman cp ${CONTAINER_ID}:/workspace/artifacts ./artifacts 2>/dev/null || true
-            podman rm ${CONTAINER_ID} 2>/dev/null || true
-          fi
-          echo "Contents of ./artifacts after copy:"
+
+          echo "Running pkg-builder container to generate artifacts..."
+          podman run --rm --name astrum-pkg-${{ github.run_id }} \
+            -v ./artifacts:/workspace/artifacts:Z \
+            astrum-pkg-builder 2>&1 || true
+
+          echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
-          
+
           echo "=== .pacman build completed at $(date) ==="
           ls -la ./artifacts/*.pacman 2>/dev/null || echo "No .pacman artifacts found"
 
@@ -155,22 +155,22 @@ jobs:
         id: build-appimage
         continue-on-error: true
         run: |
+          set -e
           echo "=== Starting .AppImage build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
-          
+
           echo "Building appimage with version: ${VERSION}"
           podman-compose -f docker-compose.yml build appimage-builder
-          
-          echo "Extracting appimage artifact..."
-          CONTAINER_ID=$(podman create --name astrum-appimage-${{ github.run_id }} astrum-appimage-builder 2>/dev/null || echo "")
-          if [ -n "${CONTAINER_ID}" ]; then
-            podman cp ${CONTAINER_ID}:/workspace/artifacts ./artifacts 2>/dev/null || true
-            podman rm ${CONTAINER_ID} 2>/dev/null || true
-          fi
-          echo "Contents of ./artifacts after copy:"
+
+          echo "Running appimage-builder container to generate artifacts..."
+          podman run --rm --name astrum-appimage-${{ github.run_id }} \
+            -v ./artifacts:/workspace/artifacts:Z \
+            astrum-appimage-builder 2>&1 || true
+
+          echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
-          
+
           echo "=== .AppImage build completed at $(date) ==="
           ls -la ./artifacts/*.AppImage 2>/dev/null || echo "No .AppImage artifacts found"
 
