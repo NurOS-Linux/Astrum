@@ -6,15 +6,15 @@
 
 FROM ghcr.io/void-linux/void-glibc-full:latest
 
-# Настройка зеркала XBPS (российское зеркало Яндекса)
+# Настройка зеркала XBPS (официальное зеркало Void Linux с fastly CDN)
 # Зеркало передается через переменную окружения XBPS_MIRROR
-ARG XBPS_MIRROR=https://mirror.yandex.ru/mirrors/voidlinux
+ARG XBPS_MIRROR=https://repo-fastly.voidlinux.org
 
 # Инициализация зеркала в конфигурации xbps
 # Используем прямой URL без bash-парсинга
 RUN mkdir -p /etc/xbps.d && \
-    echo "repository=https://mirror.yandex.ru/mirrors/voidlinux/current" > /etc/xbps.d/00-repository-main.conf && \
-    echo "repository=https://mirror.yandex.ru/mirrors/voidlinux/current/multilib" > /etc/xbps.d/00-repository-multilib.conf
+    echo "repository=https://repo-fastly.voidlinux.org/current" > /etc/xbps.d/00-repository-main.conf && \
+    echo "repository=https://repo-fastly.voidlinux.org/current/multilib" > /etc/xbps.d/00-repository-multilib.conf
 
 # Обновление системы и установка зависимостей
 # Runtime библиотеки для GTK4, Mesa (GLX/EGL/GBM), шрифты

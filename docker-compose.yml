@@ -59,7 +59,7 @@ services:
       context: .
       dockerfile: docker/test.Dockerfile
       args:
-        XBPS_MIRROR: ${XBPS_MIRROR:-https://mirror.yandex.ru/mirrors/voidlinux}
+        XBPS_MIRROR: ${XBPS_MIRROR:-https://repo-fastly.voidlinux.org}
     container_name: astrum-test
     # X410 использует :0, WSLg использует :0 и wayland-0
     environment:
@@ -69,7 +69,7 @@ services:
       - GDK_BACKEND=wayland,x11
       - GSK_RENDERER=cairo
       - GTK_A11Y=none
-      - XBPS_MIRROR=${XBPS_MIRROR:-https://mirror.yandex.ru/mirrors/voidlinux}
+      - XBPS_MIRROR=${XBPS_MIRROR:-https://repo-fastly.voidlinux.org}
     # Проброс сокетов для графической подсистемы
     volumes:
       # X11 socket
