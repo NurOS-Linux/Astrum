@@ -107,14 +107,19 @@ jobs:
           export VERSION=${VERSION}
           export ARCH=${ARCH}
 
-          echo "Building and running deb-builder..."
-          # Запускаем сборку в контейнере
+          echo "Building deb-builder image..."
+          # Собираем образ через podman-compose build
           podman-compose -f docker-compose.yml build \
             --build-arg VERSION=${VERSION} \
             --build-arg ARCH=${ARCH} \
             deb-builder
           
-          CONTAINER_ID=$(podman create localhost/astrum-deb-builder)
+          # Экспортируем образ в tar и импортируем обратно для совместимости хранилищ
+          podman save localhost/astrum_deb-builder > /tmp/deb-builder.tar
+          podman load < /tmp/deb-builder.tar
+          
+          echo "Creating and running container..."
+          CONTAINER_ID=$(podman create astrum-deb-builder)
           podman start -a ${CONTAINER_ID} || true
           
           # Копируем артефакты
@@ -139,14 +144,19 @@ jobs:
           export VERSION=${VERSION}
           export ARCH=${ARCH}
 
-          echo "Building and running rpm-builder..."
-          # Запускаем сборку в контейнере
+          echo "Building rpm-builder image..."
+          # Собираем образ через podman-compose build
           podman-compose -f docker-compose.yml build \
             --build-arg VERSION=${VERSION} \
             --build-arg ARCH=${ARCH} \
             rpm-builder
           
-          CONTAINER_ID=$(podman create localhost/astrum-rpm-builder)
+          # Экспортируем образ в tar и импортируем обратно для совместимости хранилищ
+          podman save localhost/astrum_rpm-builder > /tmp/rpm-builder.tar
+          podman load < /tmp/rpm-builder.tar
+          
+          echo "Creating and running container..."
+          CONTAINER_ID=$(podman create astrum-rpm-builder)
           podman start -a ${CONTAINER_ID} || true
           
           # Копируем артефакты
@@ -171,14 +181,19 @@ jobs:
           export VERSION=${VERSION}
           export ARCH=${ARCH}
 
-          echo "Building and running pkg-builder..."
-          # Запускаем сборку в контейнере
+          echo "Building pkg-builder image..."
+          # Собираем образ через podman-compose build
           podman-compose -f docker-compose.yml build \
             --build-arg VERSION=${VERSION} \
             --build-arg ARCH=${ARCH} \
             pkg-builder
           
-          CONTAINER_ID=$(podman create localhost/astrum-pkg-builder)
+          # Экспортируем образ в tar и импортируем обратно для совместимости хранилищ
+          podman save localhost/astrum_pkg-builder > /tmp/pkg-builder.tar
+          podman load < /tmp/pkg-builder.tar
+          
+          echo "Creating and running container..."
+          CONTAINER_ID=$(podman create astrum-pkg-builder)
           podman start -a ${CONTAINER_ID} || true
           
           # Копируем артефакты
@@ -203,14 +218,19 @@ jobs:
           export VERSION=${VERSION}
           export ARCH=${ARCH}
 
-          echo "Building and running appimage-builder..."
-          # Запускаем сборку в контейнере
+          echo "Building appimage-builder image..."
+          # Собираем образ через podman-compose build
           podman-compose -f docker-compose.yml build \
             --build-arg VERSION=${VERSION} \
             --build-arg ARCH=${ARCH} \
             appimage-builder
           
-          CONTAINER_ID=$(podman create localhost/astrum-appimage-builder)
+          # Экспортируем образ в tar и импортируем обратно для совместимости хранилищ
+          podman save localhost/astrum_appimage-builder > /tmp/appimage-builder.tar
+          podman load < /tmp/appimage-builder.tar
+          
+          echo "Creating and running container..."
+          CONTAINER_ID=$(podman create astrum-appimage-builder)
           podman start -a ${CONTAINER_ID} || true
           
           # Копируем артефакты
