@@ -32,8 +32,15 @@ COPY . .
 RUN chown -R builder:builder /workspace
 
 # Переменные окружения
+# VERSION передаётся из CI/CD (из тега релиза, например v1.2.0 -> 1.2.0)
+# ARCH определяется автоматически
 ARG VERSION=0.0.1
+ARG ARCH=x86_64
 ENV VERSION=${VERSION}
+ENV ARCH=${ARCH}
+
+# Определение архитектуры
+RUN if [ "$(uname -m)" = "aarch64" ]; then export ARCH=aarch64; elif [ "$(uname -m)" = "x86_64" ]; then export ARCH=x86_64; fi
 
 # Переключение на пользователя builder
 USER builder
@@ -51,7 +58,7 @@ RUN mkdir -p /workspace/pkgdir/usr && \
 # Создание .pacman пакета (формат .pkg.tar.zst с другим именем)
 RUN cd /workspace && \
     tar -czf /tmp/pkg.tar.gz -C pkgdir . && \
-    zstd -19 --rm /tmp/pkg.tar.gz -o /workspace/artifacts/astrum-${VERSION}-1-x86_64.pacman
+    zstd -19 --rm /tmp/pkg.tar.gz -o /workspace/artifacts/astrum-${VERSION}-1-${ARCH}.pkg.tar.zst
 
 # Директория для артефактов
 VOLUME /workspace/artifacts

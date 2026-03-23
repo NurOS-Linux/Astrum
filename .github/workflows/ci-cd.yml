@@ -41,11 +41,29 @@ jobs:
       - name: Get version from tag
         id: get_version
         run: |
+          # Извлекаем версию из тега (v1.2.0 -> 1.2.0)
           VERSION=${GITHUB_REF#refs/tags/v}
           TAG=${GITHUB_REF#refs/tags/}
+          # Определяем архитектуру
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "x86_64" ]; then
+            DEB_ARCH=amd64
+            RPM_ARCH=x86_64
+            PACMAN_ARCH=x86_64
+            APPIMAGE_ARCH=x86_64
+          elif [ "$ARCH" = "aarch64" ]; then
+            DEB_ARCH=arm64
+            RPM_ARCH=aarch64
+            PACMAN_ARCH=aarch64
+            APPIMAGE_ARCH=aarch64
+          fi
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "Building version: ${VERSION}"
+          echo "deb_arch=${DEB_ARCH}" >> $GITHUB_OUTPUT
+          echo "rpm_arch=${RPM_ARCH}" >> $GITHUB_OUTPUT
+          echo "pacman_arch=${PACMAN_ARCH}" >> $GITHUB_OUTPUT
+          echo "appimage_arch=${APPIMAGE_ARCH}" >> $GITHUB_OUTPUT
+          echo "Building version: ${VERSION} for ${ARCH}"
 
       - name: Install dependencies
         run: |
@@ -85,10 +103,15 @@ jobs:
         run: |
           echo "=== Starting .deb build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
+          ARCH=${{ steps.get_version.outputs.deb_arch }}
           export VERSION=${VERSION}
+          export ARCH=${ARCH}
 
           echo "Building deb-builder image..."
-          podman-compose -f docker-compose.yml build deb-builder
+          podman-compose -f docker-compose.yml build \
+            --build-arg VERSION=${VERSION} \
+            --build-arg ARCH=${ARCH} \
+            deb-builder
 
           echo "Running deb-builder container..."
           podman run --name deb-run-${{ github.run_id }} astrum-deb-builder 2>&1 || true
@@ -110,10 +133,15 @@ jobs:
         run: |
           echo "=== Starting .rpm build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
+          ARCH=${{ steps.get_version.outputs.rpm_arch }}
           export VERSION=${VERSION}
+          export ARCH=${ARCH}
 
           echo "Building rpm-builder image..."
-          podman-compose -f docker-compose.yml build rpm-builder
+          podman-compose -f docker-compose.yml build \
+            --build-arg VERSION=${VERSION} \
+            --build-arg ARCH=${ARCH} \
+            rpm-builder
 
           echo "Running rpm-builder container..."
           podman run --name rpm-run-${{ github.run_id }} astrum-rpm-builder 2>&1 || true
@@ -135,10 +163,15 @@ jobs:
         run: |
           echo "=== Starting .pacman build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
+          ARCH=${{ steps.get_version.outputs.pacman_arch }}
           export VERSION=${VERSION}
+          export ARCH=${ARCH}
 
           echo "Building pkg-builder image..."
-          podman-compose -f docker-compose.yml build pkg-builder
+          podman-compose -f docker-compose.yml build \
+            --build-arg VERSION=${VERSION} \
+            --build-arg ARCH=${ARCH} \
+            pkg-builder
 
           echo "Running pkg-builder container..."
           podman run --name pkg-run-${{ github.run_id }} astrum-pkg-builder 2>&1 || true
@@ -160,10 +193,15 @@ jobs:
         run: |
           echo "=== Starting .AppImage build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
+          ARCH=${{ steps.get_version.outputs.appimage_arch }}
           export VERSION=${VERSION}
+          export ARCH=${ARCH}
 
           echo "Building appimage-builder image..."
-          podman-compose -f docker-compose.yml build appimage-builder
+          podman-compose -f docker-compose.yml build \
+            --build-arg VERSION=${VERSION} \
+            --build-arg ARCH=${ARCH} \
+            appimage-builder
 
           echo "Running appimage-builder container..."
           podman run --name appimage-run-${{ github.run_id }} astrum-appimage-builder 2>&1 || true

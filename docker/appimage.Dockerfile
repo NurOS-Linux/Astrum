@@ -53,8 +53,15 @@ WORKDIR /workspace
 COPY . .
 
 # Переменные окружения
+# VERSION передаётся из CI/CD (из тега релиза, например v1.2.0 -> 1.2.0)
+# ARCH определяется автоматически
 ARG VERSION=0.0.1
+ARG ARCH=x86_64
 ENV VERSION=${VERSION}
+ENV ARCH=${ARCH}
+
+# Определение архитектуры
+RUN if [ "$(uname -m)" = "aarch64" ]; then export ARCH=aarch64; elif [ "$(uname -m)" = "x86_64" ]; then export ARCH=x86_64; fi
 
 # Флаги для статической линковки
 # -static: статическая линковка libc (musl)
@@ -131,8 +138,8 @@ RUN VERSION=${VERSION} linuxdeploy \
 
 # Перемещение артефакта
 RUN mkdir -p /workspace/artifacts && \
-    mv Astrum-*.AppImage /workspace/artifacts/Astrum-${VERSION}-x86_64.AppImage || \
-    mv *.AppImage /workspace/artifacts/Astrum-${VERSION}-x86_64.AppImage
+    mv Astrum-*.AppImage /workspace/artifacts/Astrum-${VERSION}-${ARCH}.AppImage || \
+    mv *.AppImage /workspace/artifacts/Astrum-${VERSION}-${ARCH}.AppImage
 
 # Директория для артефактов
 VOLUME /workspace/artifacts

@@ -31,8 +31,15 @@ WORKDIR /workspace
 COPY . .
 
 # Переменные окружения
+# VERSION передаётся из CI/CD (из тега релиза, например v1.2.0 -> 1.2.0)
+# ARCH определяется автоматически
 ARG VERSION=0.0.1
+ARG ARCH=x86_64
 ENV VERSION=${VERSION}
+ENV ARCH=${ARCH}
+
+# Определение архитектуры
+RUN if [ "$(uname -m)" = "aarch64" ]; then export ARCH=aarch64; elif [ "$(uname -m)" = "x86_64" ]; then export ARCH=x86_64; fi
 
 # Сборка проекта
 RUN meson setup build \
@@ -85,7 +92,7 @@ RUN echo "Name:           astrum" > /workspace/rpmbuild/SPECS/astrum.spec \
 WORKDIR /workspace/rpmbuild
 RUN mkdir -p /workspace/artifacts && \
     rpmbuild -bb SPECS/astrum.spec --define "_topdir /workspace/rpmbuild" && \
-    cp RPMS/x86_64/astrum-${VERSION}-1.x86_64.rpm /workspace/artifacts/astrum-${VERSION}-1.x86_64.rpm
+    cp RPMS/${ARCH}/astrum-${VERSION}-1.${ARCH}.rpm /workspace/artifacts/astrum-${VERSION}-1.${ARCH}.rpm
 
 # Директория для артефактов
 VOLUME /workspace/artifacts

@@ -30,8 +30,15 @@ WORKDIR /workspace
 COPY . .
 
 # Переменные окружения
+# VERSION передаётся из CI/CD (из тега релиза, например v1.2.0 -> 1.2.0)
+# ARCH определяется автоматически
 ARG VERSION=0.0.1
+ARG ARCH=amd64
 ENV VERSION=${VERSION}
+ENV ARCH=${ARCH}
+
+# Определение архитектуры
+RUN if [ "$(uname -m)" = "aarch64" ]; then export ARCH=arm64; elif [ "$(uname -m)" = "x86_64" ]; then export ARCH=amd64; fi
 
 # Сборка проекта
 RUN meson setup build \
@@ -56,7 +63,7 @@ RUN mkdir -p /workspace/deb/DEBIAN \
 # Сборка .deb пакета
 WORKDIR /workspace/deb
 RUN mkdir -p /workspace/artifacts && \
-    dpkg-deb --build . /workspace/artifacts/astrum_${VERSION}_amd64.deb
+    dpkg-deb --build . /workspace/artifacts/astrum_${VERSION}_${ARCH}.deb
 
 # Директория для артефактов
 VOLUME /workspace/artifacts
