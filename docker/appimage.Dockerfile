@@ -19,6 +19,7 @@ RUN apk add --no-cache \
     gettext \
     desktop-file-utils \
     git \
+    curl \
     ca-certificates \
     wget \
     fuse \
@@ -33,16 +34,16 @@ RUN apk add --no-cache \
     && rm -rf /var/cache/apk/*
 
 # Загрузка appimagetool (нет в репозитории Alpine 3.21)
-RUN wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage \
-    -O /usr/local/bin/appimagetool && \
+RUN curl -sSL https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage \
+    -o /usr/local/bin/appimagetool && \
     chmod +x /usr/local/bin/appimagetool
 
 # Загрузка linuxdeploy и плагина GTK4
-RUN wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
-    -O /usr/local/bin/linuxdeploy && \
+RUN curl -sSL https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
+    -o /usr/local/bin/linuxdeploy && \
     chmod +x /usr/local/bin/linuxdeploy && \
-    wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/releases/download/continuous/linuxdeploy-plugin-gtk-x86_64.AppImage \
-    -O /usr/local/bin/linuxdeploy-plugin-gtk && \
+    curl -sSL https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/releases/download/continuous/linuxdeploy-plugin-gtk-x86_64.AppImage \
+    -o /usr/local/bin/linuxdeploy-plugin-gtk && \
     chmod +x /usr/local/bin/linuxdeploy-plugin-gtk
 
 # Рабочая директория
