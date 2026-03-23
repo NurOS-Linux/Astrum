@@ -6,56 +6,56 @@
 
 FROM ghcr.io/void-linux/void-glibc-full:latest
 
-# Настройка зеркала XBPS (официальное зеркало Void Linux с fastly CDN)
-# Зеркало передается через переменную окружения XBPS_MIRROR
-ARG XBPS_MIRROR=https://repo-fastly.voidlinux.org
-
-# Инициализация зеркала в конфигурации xbps
-# Используем прямой URL без bash-парсинга
+# Настройка зеркала XBPS (официальное зеркало Void Linux)
+# Используем несколько зеркал для отказоустойчивости
 RUN mkdir -p /etc/xbps.d && \
-    echo "repository=https://repo-fastly.voidlinux.org/current" > /etc/xbps.d/00-repository-main.conf && \
-    echo "repository=https://repo-fastly.voidlinux.org/current/multilib" > /etc/xbps.d/00-repository-multilib.conf
+    echo "repository=https://repo-default.voidlinux.org/current" > /etc/xbps.d/00-repository-main.conf && \
+    echo "repository=https://repo-default.voidlinux.org/current/multilib" > /etc/xbps.d/00-repository-multilib.conf
 
-# Обновление системы и установка зависимостей
-# Runtime библиотеки для GTK4, Mesa (GLX/EGL/GBM), шрифты
-RUN xbps-install -Suy && \
-    xbps-install -y \
-    base-devel \
-    mold \
-    vala \
-    meson \
-    ninja \
-    gtk4-devel \
-    libadwaita-devel \
-    glib-devel \
-    gettext \
-    desktop-file-utils \
-    git \
-    dbus \
-    # Runtime GTK4 и LibAdwaita
-    gtk4 \
-    libadwaita \
-    # Mesa OpenGL/GLX/EGL/GBM для аппаратного ускорения
-    libglvnd \
-    libdrm \
-    libgbm \
-    # X11 библиотеки
-    libX11 \
-    libXext \
-    libXrender \
-    libXtst \
-    libXi \
-    libXcursor \
-    libXcomposite \
-    libXdamage \
-    libXfixes \
-    libXrandr \
-    # Шрифты для корректного отображения текста
-    noto-fonts-ttf \
-    noto-fonts-emoji \
-    fontconfig \
-    # Для работы dbus
-    dbus-libs && \
+# Обновление системы и установка зависимостей с повторными попытками
+# xbps-install может завершиться с ошибкой из-за сети, пробуем до 3 раз
+RUN set -e; \
+    for attempt in 1 2 3; do \
+        echo "=== Попытка установки зависимостей #$attempt ==="; \
+        if xbps-install -Suy && \
+           xbps-install -y \
+                base-devel \
+                mold \
+                vala \
+                meson \
+                ninja \
+                gtk4-devel \
+                libadwaita-devel \
+                glib-devel \
+                gettext \
+                desktop-file-utils \
+                git \
+                dbus \
+                gtk4 \
+                libadwaita \
+                libglvnd \
+                libdrm \
+                libgbm \
+                libX11 \
+                libXext \
+                libXrender \
+                libXtst \
+                libXi \
+                libXcursor \
+                libXcomposite \
+                libXdamage \
+                libXfixes \
+                libXrandr \
+                noto-fonts-ttf \
+                noto-fonts-emoji \
+                fontconfig \
+                dbus-libs; then \
+            echo "=== Установка завершена успешно ==="; \
+            break; \
+        fi; \
+        echo "Попытка #$attempt не удалась, ждём 10 секунд..."; \
+        sleep 10; \
+    done && \
     # Очистка кеша xbps для уменьшения размера образа
     xbps-remove -O && \
     rm -rf /var/cache/xbps/* && \
