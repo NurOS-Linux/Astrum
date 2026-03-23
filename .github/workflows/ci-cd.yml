@@ -107,18 +107,9 @@ jobs:
           export VERSION=${VERSION}
           export ARCH=${ARCH}
 
-          echo "Building deb-builder image..."
-          podman-compose -f docker-compose.yml build \
-            --build-arg VERSION=${VERSION} \
-            --build-arg ARCH=${ARCH} \
-            deb-builder
-
-          echo "Running deb-builder container..."
-          podman run --name deb-run-${{ github.run_id }} containers-storage:localhost/astrum-deb-builder 2>&1 || true
-          
-          # Копируем артефакты из контейнера
-          podman cp deb-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
-          podman rm deb-run-${{ github.run_id }} 2>/dev/null || true
+          echo "Building and running deb-builder..."
+          mkdir -p ./artifacts
+          podman-compose -f docker-compose.yml run -T --rm -v ${{ github.workspace }}/artifacts:/workspace/artifacts deb-builder 2>&1 || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -137,18 +128,9 @@ jobs:
           export VERSION=${VERSION}
           export ARCH=${ARCH}
 
-          echo "Building rpm-builder image..."
-          podman-compose -f docker-compose.yml build \
-            --build-arg VERSION=${VERSION} \
-            --build-arg ARCH=${ARCH} \
-            rpm-builder
-
-          echo "Running rpm-builder container..."
-          podman run --name rpm-run-${{ github.run_id }} containers-storage:localhost/astrum-rpm-builder 2>&1 || true
-          
-          # Копируем артефакты из контейнера
-          podman cp rpm-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
-          podman rm rpm-run-${{ github.run_id }} 2>/dev/null || true
+          echo "Building and running rpm-builder..."
+          mkdir -p ./artifacts
+          podman-compose -f docker-compose.yml run -T --rm -v ${{ github.workspace }}/artifacts:/workspace/artifacts rpm-builder 2>&1 || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -167,18 +149,9 @@ jobs:
           export VERSION=${VERSION}
           export ARCH=${ARCH}
 
-          echo "Building pkg-builder image..."
-          podman-compose -f docker-compose.yml build \
-            --build-arg VERSION=${VERSION} \
-            --build-arg ARCH=${ARCH} \
-            pkg-builder
-
-          echo "Running pkg-builder container..."
-          podman run --name pkg-run-${{ github.run_id }} containers-storage:localhost/astrum-pkg-builder 2>&1 || true
-          
-          # Копируем артефакты из контейнера
-          podman cp pkg-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
-          podman rm pkg-run-${{ github.run_id }} 2>/dev/null || true
+          echo "Building and running pkg-builder..."
+          mkdir -p ./artifacts
+          podman-compose -f docker-compose.yml run -T --rm -v ${{ github.workspace }}/artifacts:/workspace/artifacts pkg-builder 2>&1 || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -197,18 +170,9 @@ jobs:
           export VERSION=${VERSION}
           export ARCH=${ARCH}
 
-          echo "Building appimage-builder image..."
-          podman-compose -f docker-compose.yml build \
-            --build-arg VERSION=${VERSION} \
-            --build-arg ARCH=${ARCH} \
-            appimage-builder
-
-          echo "Running appimage-builder container..."
-          podman run --name appimage-run-${{ github.run_id }} containers-storage:localhost/astrum-appimage-builder 2>&1 || true
-          
-          # Копируем артефакты из контейнера
-          podman cp appimage-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
-          podman rm appimage-run-${{ github.run_id }} 2>/dev/null || true
+          echo "Building and running appimage-builder..."
+          mkdir -p ./artifacts
+          podman-compose -f docker-compose.yml run -T --rm -v ${{ github.workspace }}/artifacts:/workspace/artifacts appimage-builder 2>&1 || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
