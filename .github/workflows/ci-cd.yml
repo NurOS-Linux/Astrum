@@ -83,18 +83,16 @@ jobs:
         id: build-deb
         continue-on-error: true
         run: |
-          set -e
           echo "=== Starting .deb build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
 
-          echo "Building deb with version: ${VERSION}"
-          podman-compose -f docker-compose.yml build deb-builder
-
-          echo "Running deb-builder container to generate artifacts..."
-          podman run --rm --name astrum-deb-${{ github.run_id }} \
-            -v ./artifacts:/workspace/artifacts:Z \
-            astrum-deb-builder 2>&1 || true
+          echo "Building and running deb-builder..."
+          podman-compose -f docker-compose.yml run --rm deb-builder 2>&1 || true
+          
+          # Копируем артефакты из docker volume
+          podman run --rm -v artifacts:/src -v ${{ github.workspace }}/artifacts:/out \
+            alpine sh -c "cp -r /src/* /out/ || true" 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -107,18 +105,16 @@ jobs:
         id: build-rpm
         continue-on-error: true
         run: |
-          set -e
           echo "=== Starting .rpm build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
 
-          echo "Building rpm with version: ${VERSION}"
-          podman-compose -f docker-compose.yml build rpm-builder
-
-          echo "Running rpm-builder container to generate artifacts..."
-          podman run --rm --name astrum-rpm-${{ github.run_id }} \
-            -v ./artifacts:/workspace/artifacts:Z \
-            astrum-rpm-builder 2>&1 || true
+          echo "Building and running rpm-builder..."
+          podman-compose -f docker-compose.yml run --rm rpm-builder 2>&1 || true
+          
+          # Копируем артефакты из docker volume
+          podman run --rm -v artifacts:/src -v ${{ github.workspace }}/artifacts:/out \
+            alpine sh -c "cp -r /src/* /out/ || true" 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -131,18 +127,16 @@ jobs:
         id: build-pacman
         continue-on-error: true
         run: |
-          set -e
           echo "=== Starting .pacman build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
 
-          echo "Building pacman with version: ${VERSION}"
-          podman-compose -f docker-compose.yml build pkg-builder
-
-          echo "Running pkg-builder container to generate artifacts..."
-          podman run --rm --name astrum-pkg-${{ github.run_id }} \
-            -v ./artifacts:/workspace/artifacts:Z \
-            astrum-pkg-builder 2>&1 || true
+          echo "Building and running pkg-builder..."
+          podman-compose -f docker-compose.yml run --rm pkg-builder 2>&1 || true
+          
+          # Копируем артефакты из docker volume
+          podman run --rm -v artifacts:/src -v ${{ github.workspace }}/artifacts:/out \
+            alpine sh -c "cp -r /src/* /out/ || true" 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -155,18 +149,16 @@ jobs:
         id: build-appimage
         continue-on-error: true
         run: |
-          set -e
           echo "=== Starting .AppImage build at $(date) ==="
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
 
-          echo "Building appimage with version: ${VERSION}"
-          podman-compose -f docker-compose.yml build appimage-builder
-
-          echo "Running appimage-builder container to generate artifacts..."
-          podman run --rm --name astrum-appimage-${{ github.run_id }} \
-            -v ./artifacts:/workspace/artifacts:Z \
-            astrum-appimage-builder 2>&1 || true
+          echo "Building and running appimage-builder..."
+          podman-compose -f docker-compose.yml run --rm appimage-builder 2>&1 || true
+          
+          # Копируем артефакты из docker volume
+          podman run --rm -v artifacts:/src -v ${{ github.workspace }}/artifacts:/out \
+            alpine sh -c "cp -r /src/* /out/ || true" 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
