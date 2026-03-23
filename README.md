@@ -4,7 +4,11 @@ Modern file manager for AetherDE, built with Vala, GTK4, and LibAdwaita.
 
 [![Translation status](https://hosted.weblate.org/widget/nuros/astrum/svg-badge.svg?native=1)](https://hosted.weblate.org/projects/nuros/astrum/)
 
-![Astrum](screenshots/main.png)
+## Screenshots
+
+### Light Theme
+
+![Astrum Light Theme](screenshots/light-theme.png)
 
 ## Features
 
@@ -45,13 +49,27 @@ meson compile -C build
 ### Run (development)
 
 ```bash
-GSETTINGS_SCHEMA_DIR=./data ./build/src/astrum 
+GSETTINGS_SCHEMA_DIR=./data ./build/src/astrum
 ```
 
 ### Install
 
 ```bash
 meson install -C build
+```
+
+## Docker Build
+
+### AppImage (Alpine 3.21)
+
+```bash
+docker-compose build appimage-builder
+```
+
+### Test Container (Void Linux)
+
+```bash
+docker-compose build test
 ```
 
 ## Keyboard Shortcuts
