@@ -114,7 +114,7 @@ jobs:
             deb-builder
 
           echo "Running deb-builder container..."
-          podman run --name deb-run-${{ github.run_id }} astrum-deb-builder 2>&1 || true
+          podman run --name deb-run-${{ github.run_id }} localhost/astrum-deb-builder 2>&1 || true
           
           # Копируем артефакты из контейнера
           podman cp deb-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
@@ -144,7 +144,7 @@ jobs:
             rpm-builder
 
           echo "Running rpm-builder container..."
-          podman run --name rpm-run-${{ github.run_id }} astrum-rpm-builder 2>&1 || true
+          podman run --name rpm-run-${{ github.run_id }} localhost/astrum-rpm-builder 2>&1 || true
           
           # Копируем артефакты из контейнера
           podman cp rpm-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
@@ -174,7 +174,7 @@ jobs:
             pkg-builder
 
           echo "Running pkg-builder container..."
-          podman run --name pkg-run-${{ github.run_id }} astrum-pkg-builder 2>&1 || true
+          podman run --name pkg-run-${{ github.run_id }} localhost/astrum-pkg-builder 2>&1 || true
           
           # Копируем артефакты из контейнера
           podman cp pkg-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
@@ -204,7 +204,7 @@ jobs:
             appimage-builder
 
           echo "Running appimage-builder container..."
-          podman run --name appimage-run-${{ github.run_id }} astrum-appimage-builder 2>&1 || true
+          podman run --name appimage-run-${{ github.run_id }} localhost/astrum-appimage-builder 2>&1 || true
           
           # Копируем артефакты из контейнера
           podman cp appimage-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
