@@ -73,10 +73,12 @@ ENV CXXFLAGS="-O2 -march=x86-64-v3 -flto=auto -ffat-lto-objects -static-libgcc"
 ENV LDFLAGS="-fuse-ld=mold -static -static-libgcc -Wl,-Bstatic -lglib-2.0 -Wl,-Bdynamic"
 
 # Сборка проекта
+# --native-file: отключаем проверку запуска исполняемых файлов (требуется для musl libc)
 RUN meson setup build \
     -Dbuildtype=release \
     -Db_lto=true \
     -Db_lto_mode=thin \
+    --native-file /dev/null \
     && meson compile -C build \
     && DESTDIR=/workspace/AppDir/usr meson install -C build
 
