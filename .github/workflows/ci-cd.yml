@@ -87,8 +87,15 @@ jobs:
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
 
-          echo "Building and running deb-builder..."
-          podman-compose -f docker-compose.yml run -T --rm deb-builder 2>&1 || true
+          echo "Building deb-builder image..."
+          podman-compose -f docker-compose.yml build deb-builder
+
+          echo "Running deb-builder container..."
+          podman run --name deb-run-${{ github.run_id }} astrum-deb-builder 2>&1 || true
+          
+          # Копируем артефакты из контейнера
+          podman cp deb-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
+          podman rm deb-run-${{ github.run_id }} 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -105,8 +112,15 @@ jobs:
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
 
-          echo "Building and running rpm-builder..."
-          podman-compose -f docker-compose.yml run -T --rm rpm-builder 2>&1 || true
+          echo "Building rpm-builder image..."
+          podman-compose -f docker-compose.yml build rpm-builder
+
+          echo "Running rpm-builder container..."
+          podman run --name rpm-run-${{ github.run_id }} astrum-rpm-builder 2>&1 || true
+          
+          # Копируем артефакты из контейнера
+          podman cp rpm-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
+          podman rm rpm-run-${{ github.run_id }} 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -123,8 +137,15 @@ jobs:
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
 
-          echo "Building and running pkg-builder..."
-          podman-compose -f docker-compose.yml run -T --rm pkg-builder 2>&1 || true
+          echo "Building pkg-builder image..."
+          podman-compose -f docker-compose.yml build pkg-builder
+
+          echo "Running pkg-builder container..."
+          podman run --name pkg-run-${{ github.run_id }} astrum-pkg-builder 2>&1 || true
+          
+          # Копируем артефакты из контейнера
+          podman cp pkg-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
+          podman rm pkg-run-${{ github.run_id }} 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -141,8 +162,15 @@ jobs:
           VERSION=${{ steps.get_version.outputs.version }}
           export VERSION=${VERSION}
 
-          echo "Building and running appimage-builder..."
-          podman-compose -f docker-compose.yml run -T --rm appimage-builder 2>&1 || true
+          echo "Building appimage-builder image..."
+          podman-compose -f docker-compose.yml build appimage-builder
+
+          echo "Running appimage-builder container..."
+          podman run --name appimage-run-${{ github.run_id }} astrum-appimage-builder 2>&1 || true
+          
+          # Копируем артефакты из контейнера
+          podman cp appimage-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
+          podman rm appimage-run-${{ github.run_id }} 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
