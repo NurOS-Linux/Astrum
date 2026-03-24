@@ -540,7 +540,7 @@ jobs:
             echo "| \`astrum-${VERSION}-1.x86_64.rpm\` | Fedora 41+, RHEL 9+ |" >> /tmp/release_notes.md
           fi
           if [[ "${PACMAN_STATUS}" == "success" ]]; then
-            echo "| \`astrum-${VERSION}-1-x86_64.pacman\` | Arch Linux |" >> /tmp/release_notes.md
+            echo "| \`astrum-${VERSION}-1-x86_64.pkg.tar.zst\` | Arch Linux |" >> /tmp/release_notes.md
           fi
           if [[ "${APPIMAGE_STATUS}" == "success" ]]; then
             echo "| \`Astrum-${VERSION}-x86_64.AppImage\` | Universal (Any Linux) |" >> /tmp/release_notes.md
@@ -569,7 +569,7 @@ jobs:
           if [[ "${PACMAN_STATUS}" == "success" ]]; then
             echo "### Arch Linux" >> /tmp/release_notes.md
             echo '```bash' >> /tmp/release_notes.md
-            echo "sudo pacman -U ./astrum-${VERSION}-1-x86_64.pacman" >> /tmp/release_notes.md
+            echo "sudo pacman -U ./astrum-${VERSION}-1-x86_64.pkg.tar.zst" >> /tmp/release_notes.md
             echo '```' >> /tmp/release_notes.md
             echo "" >> /tmp/release_notes.md
           fi
@@ -610,7 +610,6 @@ jobs:
           files: |
             ${{ github.workspace }}/packages/**/*.deb
             ${{ github.workspace }}/packages/**/*.rpm
-            ${{ github.workspace }}/packages/**/*.pacman
             ${{ github.workspace }}/packages/**/*.pkg.tar.zst
             ${{ github.workspace }}/packages/**/*.AppImage
             ${{ github.workspace }}/packages/attestation.json
