@@ -56,8 +56,6 @@ COPY docker/alpine-cross.txt /workspace/alpine-cross.txt
 COPY . .
 
 # Переменные окружения
-# VERSION передаётся из CI/CD (из тега релиза, например v1.2.0 -> 1.2.0)
-# ARCH определяется автоматически
 ARG VERSION=0.0.1
 ARG ARCH=x86_64
 ENV VERSION=${VERSION}
@@ -66,14 +64,9 @@ ENV ARCH=${ARCH}
 # Определение архитектуры
 RUN if [ "$(uname -m)" = "aarch64" ]; then export ARCH=aarch64; elif [ "$(uname -m)" = "x86_64" ]; then export ARCH=x86_64; fi
 
-# Флаги для статической линковки
-# -static: статическая линковка libc (musl)
-# -static-libgcc: статическая линковка libgcc
-# -Wl,-Bstatic: линковать следующие библиотеки статически
-# -fuse-ld=mold: быстрый линкер mold (требуется для LTO в meson.build)
-ENV CFLAGS="-O2 -march=x86-64-v3 -flto=auto -ffat-lto-objects"
-ENV CXXFLAGS="-O2 -march=x86-64-v3 -flto=auto -ffat-lto-objects -static-libgcc"
-ENV LDFLAGS="-fuse-ld=mold -static -static-libgcc -Wl,-Bstatic -lglib-2.0 -Wl,-Bdynamic"
+# Флаги для оптимизации (дополнительно к cross-file)
+ENV CFLAGS="-O2 -march=x86-64-v3 -flto=auto -ffat-lto-objects -g"
+ENV CXXFLAGS="-O2 -march=x86-64-v3 -flto=auto -ffat-lto-objects -g"
 
 # Сборка проекта
 # --cross-file: используем кросс-файл для musl libc и оптимизаций x86-64-v3

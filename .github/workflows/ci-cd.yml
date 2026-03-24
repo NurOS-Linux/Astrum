@@ -114,18 +114,13 @@ jobs:
             --build-arg ARCH=${ARCH} \
             deb-builder
           
-          # Экспортируем образ в tar и импортируем обратно для совместимости хранилищ
-          podman save localhost/astrum_deb-builder > /tmp/deb-builder.tar
-          podman load < /tmp/deb-builder.tar
-          
-          echo "Creating and running container..."
-          CONTAINER_ID=$(podman create astrum-deb-builder)
-          podman start -a ${CONTAINER_ID} || true
+          # Создаём контейнер и извлекаем артефакты через podman cp
+          podman-compose -f docker-compose.yml run --no-deps --name deb-run-${{ github.run_id }} deb-builder true || true
           
           # Копируем артефакты
           mkdir -p ./artifacts
-          podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ || true
-          podman rm ${CONTAINER_ID} || true
+          podman cp deb-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ || true
+          podman rm deb-run-${{ github.run_id }} || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -151,18 +146,13 @@ jobs:
             --build-arg ARCH=${ARCH} \
             rpm-builder
           
-          # Экспортируем образ в tar и импортируем обратно для совместимости хранилищ
-          podman save localhost/astrum_rpm-builder > /tmp/rpm-builder.tar
-          podman load < /tmp/rpm-builder.tar
-          
-          echo "Creating and running container..."
-          CONTAINER_ID=$(podman create astrum-rpm-builder)
-          podman start -a ${CONTAINER_ID} || true
+          # Создаём контейнер и извлекаем артефакты через podman cp
+          podman-compose -f docker-compose.yml run --no-deps --name rpm-run-${{ github.run_id }} rpm-builder true || true
           
           # Копируем артефакты
           mkdir -p ./artifacts
-          podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ || true
-          podman rm ${CONTAINER_ID} || true
+          podman cp rpm-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ || true
+          podman rm rpm-run-${{ github.run_id }} || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -188,18 +178,13 @@ jobs:
             --build-arg ARCH=${ARCH} \
             pkg-builder
           
-          # Экспортируем образ в tar и импортируем обратно для совместимости хранилищ
-          podman save localhost/astrum_pkg-builder > /tmp/pkg-builder.tar
-          podman load < /tmp/pkg-builder.tar
-          
-          echo "Creating and running container..."
-          CONTAINER_ID=$(podman create astrum-pkg-builder)
-          podman start -a ${CONTAINER_ID} || true
+          # Создаём контейнер и извлекаем артефакты через podman cp
+          podman-compose -f docker-compose.yml run --no-deps --name pkg-run-${{ github.run_id }} pkg-builder true || true
           
           # Копируем артефакты
           mkdir -p ./artifacts
-          podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ || true
-          podman rm ${CONTAINER_ID} || true
+          podman cp pkg-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ || true
+          podman rm pkg-run-${{ github.run_id }} || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -225,18 +210,13 @@ jobs:
             --build-arg ARCH=${ARCH} \
             appimage-builder
           
-          # Экспортируем образ в tar и импортируем обратно для совместимости хранилищ
-          podman save localhost/astrum_appimage-builder > /tmp/appimage-builder.tar
-          podman load < /tmp/appimage-builder.tar
-          
-          echo "Creating and running container..."
-          CONTAINER_ID=$(podman create astrum-appimage-builder)
-          podman start -a ${CONTAINER_ID} || true
+          # Создаём контейнер и извлекаем артефакты через podman cp
+          podman-compose -f docker-compose.yml run --no-deps --name appimage-run-${{ github.run_id }} appimage-builder true || true
           
           # Копируем артефакты
           mkdir -p ./artifacts
-          podman cp ${CONTAINER_ID}:/workspace/artifacts/. ./artifacts/ || true
-          podman rm ${CONTAINER_ID} || true
+          podman cp appimage-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ || true
+          podman rm appimage-run-${{ github.run_id }} || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
