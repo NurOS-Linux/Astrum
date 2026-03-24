@@ -22,6 +22,7 @@ RUN dnf install -y \
     rpmdevtools \
     git \
     mold \
+    libadwaita \
     && dnf clean all
 
 # Рабочая директория

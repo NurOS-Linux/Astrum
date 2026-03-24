@@ -93,22 +93,30 @@ RUN mkdir -p /workspace/AppDir/usr/share/applications \
     && mkdir -p /workspace/AppDir/usr/share/glib-2.0/schemas
 
 # Копирование desktop файла
-RUN if [ -f data/org.aetherde.Astrum.desktop ]; then \
-        cp data/org.aetherde.Astrum.desktop /workspace/AppDir/usr/share/applications/; \
+RUN if [ -f /workspace/AppDir/usr/share/applications/org.aetherde.Astrum.desktop ]; then \
+        cp /workspace/AppDir/usr/share/applications/org.aetherde.Astrum.desktop /workspace/AppDir/org.aetherde.Astrum.desktop; \
+    elif [ -f /workspace/data/org.aetherde.Astrum.desktop ]; then \
+        cp /workspace/data/org.aetherde.Astrum.desktop /workspace/AppDir/org.aetherde.Astrum.desktop; \
+    else \
+        echo "[Desktop Entry]" > /workspace/AppDir/org.aetherde.Astrum.desktop; \
+        echo "Name=Astrum" >> /workspace/AppDir/org.aetherde.Astrum.desktop; \
+        echo "Exec=astrum" >> /workspace/AppDir/org.aetherde.Astrum.desktop; \
+        echo "Type=Application" >> /workspace/AppDir/org.aetherde.Astrum.desktop; \
     fi
 
-# Копирование иконки (если есть)
-RUN if [ -f data/icons/org.aetherde.Astrum.svg ]; then \
-        cp data/icons/org.aetherde.Astrum.svg /workspace/AppDir/usr/share/icons/hicolor/scalable/apps/; \
+# Копирование иконки в корень AppDir
+RUN if [ -f /workspace/AppDir/usr/share/icons/hicolor/scalable/apps/org.aetherde.Astrum.svg ]; then \
+        cp /workspace/AppDir/usr/share/icons/hicolor/scalable/apps/org.aetherde.Astrum.svg /workspace/AppDir/org.aetherde.Astrum.svg; \
+    elif [ -f /workspace/data/icons/org.aetherde.Astrum.svg ]; then \
+        cp /workspace/data/icons/org.aetherde.Astrum.svg /workspace/AppDir/org.aetherde.Astrum.svg; \
     else \
-        echo '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="#3388ff"/><text x="24" y="32" text-anchor="middle" fill="white" font-size="14">A</text></svg>' \
-        > /workspace/AppDir/usr/share/icons/hicolor/scalable/apps/org.aetherde.Astrum.svg; \
+        echo '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="#3388ff"/><text x="24" y="32" text-anchor="middle" fill="white" font-size="14">A</text></svg>' > /workspace/AppDir/org.aetherde.Astrum.svg; \
     fi
 
 # Компиляция GSettings схемы
-RUN if [ -d data ]; then \
-        glib-compile-schemas data && \
-        cp data/gschemas.compiled /workspace/AppDir/usr/share/glib-2.0/schemas/; \
+RUN if [ -d /workspace/data ]; then \
+        glib-compile-schemas /workspace/data && \
+        cp /workspace/data/gschemas.compiled /workspace/AppDir/usr/share/glib-2.0/schemas/; \
     fi
 
 # Создание AppRun
@@ -117,12 +125,6 @@ RUN echo '#!/bin/bash' > /workspace/AppDir/AppRun && \
     echo 'export GSETTINGS_SCHEMA_DIR="${HERE}/usr/share/glib-2.0/schemas"' >> /workspace/AppDir/AppRun && \
     echo 'exec "${HERE}/usr/bin/astrum" "$@"' >> /workspace/AppDir/AppRun && \
     chmod +x /workspace/AppDir/AppRun
-
-# Создание desktop файла в корне AppDir
-RUN cp /workspace/AppDir/usr/share/applications/org.aetherde.Astrum.desktop /workspace/AppDir/org.aetherde.Astrum.desktop
-
-# Копирование иконки в корень AppDir
-RUN cp /workspace/AppDir/usr/share/icons/hicolor/scalable/apps/org.aetherde.Astrum.svg /workspace/AppDir/org.aetherde.Astrum.svg
 
 # Создание AppImage через linuxdeploy с плагином GTK4
 # --exclude-library: исключение библиотек, которые будут прилинкованы статически
