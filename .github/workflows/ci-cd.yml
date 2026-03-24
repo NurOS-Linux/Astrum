@@ -307,12 +307,13 @@ jobs:
       - name: Attest build provenance
         id: attest
         uses: actions/attest@v4
+        continue-on-error: true
         with:
           subject-path: |
-            ./artifacts/*.deb
-            ./artifacts/*.rpm
-            ./artifacts/*.pacman
-            ./artifacts/*.AppImage
+            ./artifacts/**/*.deb
+            ./artifacts/**/*.rpm
+            ./artifacts/**/*.pkg.tar.zst
+            ./artifacts/**/*.AppImage
           show-summary: true
 
       - name: Upload artifacts
@@ -326,7 +327,9 @@ jobs:
             artifacts/**/*.AppImage
             artifacts/attestation.json
             ${{ steps.attest.outputs.bundle-path }}
+            *.sigstore.json
           retention-days: 7
+          if-no-files-found: warn
 
   # Создание релиза на GitHub
   create-release:
