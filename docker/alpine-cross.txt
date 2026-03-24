@@ -13,35 +13,9 @@ pkgconfig = 'pkgconf'
 
 [built-in options]
 # Оптимизации для x86-64-v3 (AVX2, BMI2, FMA)
-c_args = [
-  '-march=x86-64-v3',
-  '-O2',
-  '-flto=auto',
-  '-ffat-lto-objects',
-  '-g'  # Debug символы для отладки
-]
-c_link_args = [
-  '-fuse-ld=mold',
-  '-flto=auto',
-  '-static',
-  '-static-libgcc',
-  '-Wl,-Bstatic',
-  '-lglib-2.0',
-  '-lgobject-2.0',
-  '-lgio-2.0',
-  '-Wl,-Bdynamic',
-  '-Wl,-O2',
-  '-Wl,--gc-sections',
-  '-g'  # Debug символы в бинарнике
-]
-cpp_args = [
-  '-march=x86-64-v3',
-  '-O2',
-  '-flto=auto',
-  '-ffat-lto-objects',
-  '-static-libgcc',
-  '-g'
-]
+c_args = ['-march=x86-64-v3', '-O2', '-flto=auto', '-ffat-lto-objects', '-g']
+c_link_args = ['-fuse-ld=mold', '-flto=auto', '-static', '-static-libgcc', '-Wl,-Bstatic', '-lglib-2.0', '-lgobject-2.0', '-lgio-2.0', '-Wl,-Bdynamic', '-Wl,-O2', '-Wl,--gc-sections', '-g']
+cpp_args = ['-march=x86-64-v3', '-O2', '-flto=auto', '-ffat-lto-objects', '-static-libgcc', '-g']
 vala_args = ['--target-glib=2.76']
 
 # Отключаем проверку запуска исполняемых файлов

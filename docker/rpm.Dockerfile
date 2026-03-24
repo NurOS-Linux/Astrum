@@ -71,8 +71,8 @@ RUN echo "Name:           astrum" > /workspace/rpmbuild/SPECS/astrum.spec \
     && echo "Modern file manager for AetherDE, built with Vala, GTK4, and LibAdwaita." >> /workspace/rpmbuild/SPECS/astrum.spec \
     && echo "" >> /workspace/rpmbuild/SPECS/astrum.spec \
     && echo "%install" >> /workspace/rpmbuild/SPECS/astrum.spec \
-    && echo "mkdir -p %{buildroot}/usr" >> /workspace/rpmbuild/SPECS/astrum.spec \
-    && echo "cp -r /workspace/install/* %{buildroot}/usr/" >> /workspace/rpmbuild/SPECS/astrum.spec \
+    && echo "mkdir -p %{buildroot}" >> /workspace/rpmbuild/SPECS/astrum.spec \
+    && echo "cp -r /workspace/install/* %{buildroot}/" >> /workspace/rpmbuild/SPECS/astrum.spec \
     && echo "" >> /workspace/rpmbuild/SPECS/astrum.spec \
     && echo "%files" >> /workspace/rpmbuild/SPECS/astrum.spec \
     && echo "/usr/bin/astrum" >> /workspace/rpmbuild/SPECS/astrum.spec \

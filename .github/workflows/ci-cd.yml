@@ -256,7 +256,7 @@ jobs:
           # Хеши артефактов (ищем рекурсивно)
           DEB_FILE=$(find ./artifacts -name "*.deb" 2>/dev/null | head -1)
           RPM_FILE=$(find ./artifacts -name "*.rpm" 2>/dev/null | head -1)
-          PACMAN_FILE=$(find ./artifacts \( -name "*.pacman" -o -name "*.pkg.tar.zst" \) 2>/dev/null | head -1)
+          PACMAN_FILE=$(find ./artifacts -name "*.pkg.tar.zst" 2>/dev/null | head -1)
           APPIMAGE_FILE=$(find ./artifacts -name "*.AppImage" 2>/dev/null | head -1)
 
           DEB_SHA=$(get_sha256 "${DEB_FILE}")
@@ -320,7 +320,11 @@ jobs:
         with:
           name: packages
           path: |
-            artifacts/*
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
+            artifacts/**/*.pkg.tar.zst
+            artifacts/**/*.AppImage
+            artifacts/attestation.json
             ${{ steps.attest.outputs.bundle-path }}
           retention-days: 7
 
