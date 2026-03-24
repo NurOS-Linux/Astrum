@@ -49,6 +49,9 @@ RUN curl -sSL https://github.com/linuxdeploy/linuxdeploy/releases/download/conti
 # Рабочая директория
 WORKDIR /workspace
 
+# Копирование cross-file для meson
+COPY docker/alpine-cross.txt /workspace/alpine-cross.txt
+
 # Копирование исходников
 COPY . .
 
@@ -73,12 +76,13 @@ ENV CXXFLAGS="-O2 -march=x86-64-v3 -flto=auto -ffat-lto-objects -static-libgcc"
 ENV LDFLAGS="-fuse-ld=mold -static -static-libgcc -Wl,-Bstatic -lglib-2.0 -Wl,-Bdynamic"
 
 # Сборка проекта
-# --native-file: отключаем проверку запуска исполняемых файлов (требуется для musl libc)
+# --cross-file: используем кросс-файл для musl libc и оптимизаций x86-64-v3
+# needs_exe_wrapper = true отключает проверку запуска исполняемых файлов
 RUN meson setup build \
+    --cross-file /workspace/alpine-cross.txt \
     -Dbuildtype=release \
     -Db_lto=true \
     -Db_lto_mode=thin \
-    --native-file /dev/null \
     && meson compile -C build \
     && DESTDIR=/workspace/AppDir/usr meson install -C build
 

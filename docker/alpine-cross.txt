@@ -1,0 +1,48 @@
+# Cross-file для сборки Astrum на Alpine Linux с musl libc
+# Используется для AppImage сборки
+
+[binaries]
+c = 'gcc'
+cpp = 'g++'
+vala = 'valac'
+ar = 'gcc-ar'
+nm = 'gcc-nm'
+ranlib = 'gcc-ranlib'
+strip = 'strip'
+pkgconfig = 'pkgconf'
+
+[built-in options]
+# Оптимизации для x86-64-v3 (AVX2, BMI2, FMA)
+c_args = [
+  '-march=x86-64-v3',
+  '-O2',
+  '-flto=auto',
+  '-ffat-lto-objects'
+]
+c_link_args = [
+  '-fuse-ld=mold',
+  '-static',
+  '-static-libgcc',
+  '-Wl,-Bstatic',
+  '-lglib-2.0',
+  '-Wl,-Bdynamic'
+]
+cpp_args = [
+  '-march=x86-64-v3',
+  '-O2',
+  '-flto=auto',
+  '-ffat-lto-objects',
+  '-static-libgcc'
+]
+vala_args = ['--target-glib=2.76']
+
+# Отключаем проверку запуска исполняемых файлов
+# Требуется для musl libc где тестовые бинарники не запускаются
+[properties]
+needs_exe_wrapper = true
+
+[host machine]
+system = 'linux'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'
