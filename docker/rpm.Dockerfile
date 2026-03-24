@@ -44,7 +44,7 @@ RUN if [ "$(uname -m)" = "aarch64" ]; then export ARCH=aarch64; elif [ "$(uname 
 # Сборка проекта
 RUN meson setup build \
     && meson compile -C build \
-    && DESTDIR=/workspace/rpmbuild/BUILD/astrum-${VERSION}-build/BUILDROOT meson install -C build
+    && DESTDIR=/workspace/install meson install -C build
 
 # Создание структуры RPM пакета
 RUN mkdir -p /workspace/rpmbuild/BUILD \
