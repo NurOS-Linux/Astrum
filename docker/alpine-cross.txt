@@ -13,10 +13,11 @@ pkgconfig = 'pkgconf'
 
 [built-in options]
 # Оптимизации для x86-64-v3 (AVX2, BMI2, FMA)
-# Динамическая линковка - AppImage упакует зависимости
+# Гибридная линковка: статически только musl libc + libgcc
+# GTK4 и зависимости - динамически (AppImage упакует .so)
 c_args = ['-march=x86-64-v3', '-O2', '-flto=auto', '-ffat-lto-objects', '-g']
-c_link_args = ['-fuse-ld=mold', '-flto=auto', '-Wl,-O2', '-Wl,--gc-sections', '-g']
-cpp_args = ['-march=x86-64-v3', '-O2', '-flto=auto', '-ffat-lto-objects', '-g']
+c_link_args = ['-fuse-ld=mold', '-flto=auto', '-static-libgcc', '-Wl,-Bstatic', '-lc', '-Wl,-Bdynamic', '-Wl,-O2', '-Wl,--gc-sections', '-g']
+cpp_args = ['-march=x86-64-v3', '-O2', '-flto=auto', '-ffat-lto-objects', '-static-libgcc', '-g']
 vala_args = ['--target-glib=2.76']
 
 # Отключаем проверку запуска исполняемых файлов

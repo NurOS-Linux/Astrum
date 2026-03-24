@@ -1,11 +1,18 @@
 # Dockerfile для сборки .AppImage пакетов Astrum
-# Base: Alpine 3.21 (cutting edge, GTK4 из репозитория Alpine)
-# Статическая линковка: libc, libgcc, libstdc++
-# Совместимость: Любой Linux с glibc 2.31+
+# Base: Alpine 3.21 + edge (cutting edge, GTK4 из репозитория Alpine)
+# Гибридная линковка:
+#   - Статически: musl libc, libgcc (для независимости от glibc)
+#   - Динамически: GTK4, libadwaita, glib (AppImage упакует .so внутри)
+# Совместимость: Любой Linux (musl внутри AppImage)
 
 FROM alpine:3.21
 
-ENV APK_REPOSITORIES="https://dl-cdn.alpinelinux.org/alpine/v3.21/main\nhttps://dl-cdn.alpinelinux.org/alpine/v3.21/community"
+# Добавляем edge репозиторий для linuxdeploy и дополнительных пакетов
+RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+
+ENV APK_REPOSITORIES="https://dl-cdn.alpinelinux.org/alpine/v3.21/main\nhttps://dl-cdn.alpinelinux.org/alpine/v3.21/community\nhttps://dl-cdn.alpinelinux.org/alpine/edge/main\nhttps://dl-cdn.alpinelinux.org/alpine/edge/community\nhttps://dl-cdn.alpinelinux.org/alpine/edge/testing"
 
 # Установка зависимостей для сборки
 RUN apk add --no-cache \
@@ -71,6 +78,7 @@ ENV CXXFLAGS="-O2 -march=x86-64-v3 -flto=auto -ffat-lto-objects -g"
 # Сборка проекта
 # --cross-file: используем кросс-файл для musl libc и оптимизаций x86-64-v3
 # needs_exe_wrapper = true отключает проверку запуска исполняемых файлов
+# Гибридная линковка: -static-libgcc -Wl,-Bstatic -lc -Wl,-Bdynamic
 RUN meson setup build \
     --cross-file /workspace/alpine-cross.txt \
     -Dbuildtype=release \
