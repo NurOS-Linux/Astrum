@@ -1,8 +1,9 @@
 # Dockerfile для сборки .rpm пакетов Astrum
-# Base: Fedora 39 (первая версия с GTK4 4.12+ и LibAdwaita 1.4+)
-# Совместимость: Fedora 39+, RHEL 9+ (с пересборкой)
+# Base: Fedora 40 (libadwaita 1.5.x с полным API для Vala)
+# Fedora 39 имеет libadwaita 1.4.0 с неполными .vapi файлами
+# Совместимость: Fedora 40+, RHEL 9+ (с пересборкой)
 
-FROM fedora:39
+FROM fedora:40
 
 ENV DEBIAN_FRONTEND=noninteractive
 
