@@ -256,7 +256,7 @@ jobs:
           # Хеши артефактов (ищем рекурсивно)
           DEB_FILE=$(find ./artifacts -name "*.deb" 2>/dev/null | head -1)
           RPM_FILE=$(find ./artifacts -name "*.rpm" 2>/dev/null | head -1)
-          PACMAN_FILE=$(find ./artifacts -name "*.pacman" -o -name "*.pkg.tar.zst" 2>/dev/null | head -1)
+          PACMAN_FILE=$(find ./artifacts \( -name "*.pacman" -o -name "*.pkg.tar.zst" \) 2>/dev/null | head -1)
           APPIMAGE_FILE=$(find ./artifacts -name "*.AppImage" 2>/dev/null | head -1)
 
           DEB_SHA=$(get_sha256 "${DEB_FILE}")
@@ -536,7 +536,7 @@ jobs:
             echo "| \`astrum-${VERSION}-1.x86_64.rpm\` | Fedora 41+, RHEL 9+ |" >> /tmp/release_notes.md
           fi
           if [[ "${PACMAN_STATUS}" == "success" ]]; then
-            echo "| \`astrum-${VERSION}-1-x86_64.pkg.tar.zst\` | Arch Linux |" >> /tmp/release_notes.md
+            echo "| \`astrum-${VERSION}-1-x86_64.pacman\` | Arch Linux |" >> /tmp/release_notes.md
           fi
           if [[ "${APPIMAGE_STATUS}" == "success" ]]; then
             echo "| \`Astrum-${VERSION}-x86_64.AppImage\` | Universal (Any Linux) |" >> /tmp/release_notes.md
@@ -565,7 +565,7 @@ jobs:
           if [[ "${PACMAN_STATUS}" == "success" ]]; then
             echo "### Arch Linux" >> /tmp/release_notes.md
             echo '```bash' >> /tmp/release_notes.md
-            echo "sudo pacman -U ./astrum-${VERSION}-1-x86_64.pkg.tar.zst" >> /tmp/release_notes.md
+            echo "sudo pacman -U ./astrum-${VERSION}-1-x86_64.pacman" >> /tmp/release_notes.md
             echo '```' >> /tmp/release_notes.md
             echo "" >> /tmp/release_notes.md
           fi
