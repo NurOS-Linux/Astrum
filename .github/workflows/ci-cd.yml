@@ -246,19 +246,19 @@ jobs:
               echo "not_found"
             fi
           }
-          
+
           # Статусы сборок
           DEB_STATUS="${{ steps.build-deb.outcome }}"
           RPM_STATUS="${{ steps.build-rpm.outcome }}"
           PACMAN_STATUS="${{ steps.build-pacman.outcome }}"
           APPIMAGE_STATUS="${{ steps.build-appimage.outcome }}"
-          
-          # Хеши артефактов
-          DEB_FILE=$(ls ./artifacts/*.deb 2>/dev/null | head -1)
-          RPM_FILE=$(ls ./artifacts/*.rpm 2>/dev/null | head -1)
-          PACMAN_FILE=$(ls ./artifacts/*.pacman 2>/dev/null | head -1)
-          APPIMAGE_FILE=$(ls ./artifacts/*.AppImage 2>/dev/null | head -1)
-          
+
+          # Хеши артефактов (ищем рекурсивно)
+          DEB_FILE=$(find ./artifacts -name "*.deb" 2>/dev/null | head -1)
+          RPM_FILE=$(find ./artifacts -name "*.rpm" 2>/dev/null | head -1)
+          PACMAN_FILE=$(find ./artifacts -name "*.pacman" -o -name "*.pkg.tar.zst" 2>/dev/null | head -1)
+          APPIMAGE_FILE=$(find ./artifacts -name "*.AppImage" 2>/dev/null | head -1)
+
           DEB_SHA=$(get_sha256 "${DEB_FILE}")
           RPM_SHA=$(get_sha256 "${RPM_FILE}")
           PACMAN_SHA=$(get_sha256 "${PACMAN_FILE}")
@@ -362,12 +362,12 @@ jobs:
       - name: List and verify packages
         run: |
           echo "=== Available packages ==="
-          ls -la ./packages/
-          
+          ls -laR ./packages/
+
           echo ""
           echo "=== SHA256 checksums ==="
-          sha256sum ./packages/* 2>/dev/null || echo "No packages found"
-          
+          find ./packages -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.pacman" -o -name "*.AppImage" -o -name "attestation.json" -o -name "*.sigstore.json" \) -exec sha256sum {} \; || echo "No packages found"
+
           echo ""
           echo "=== Attestation ==="
           cat ./packages/attestation.json 2>/dev/null || echo "No attestation.json found"
@@ -536,16 +536,16 @@ jobs:
             echo "| \`astrum-${VERSION}-1.x86_64.rpm\` | Fedora 41+, RHEL 9+ |" >> /tmp/release_notes.md
           fi
           if [[ "${PACMAN_STATUS}" == "success" ]]; then
-            echo "| \`astrum-${VERSION}-1-x86_64.pacman\` | Arch Linux |" >> /tmp/release_notes.md
+            echo "| \`astrum-${VERSION}-1-x86_64.pkg.tar.zst\` | Arch Linux |" >> /tmp/release_notes.md
           fi
           if [[ "${APPIMAGE_STATUS}" == "success" ]]; then
             echo "| \`Astrum-${VERSION}-x86_64.AppImage\` | Universal (Any Linux) |" >> /tmp/release_notes.md
           fi
-          
+
           echo "" >> /tmp/release_notes.md
           echo "## 🚀 Installation" >> /tmp/release_notes.md
           echo "" >> /tmp/release_notes.md
-          
+
           if [[ "${DEB_STATUS}" == "success" ]]; then
             echo "### Debian/Ubuntu" >> /tmp/release_notes.md
             echo '```bash' >> /tmp/release_notes.md
@@ -553,7 +553,7 @@ jobs:
             echo '```' >> /tmp/release_notes.md
             echo "" >> /tmp/release_notes.md
           fi
-          
+
           if [[ "${RPM_STATUS}" == "success" ]]; then
             echo "### Fedora/RHEL" >> /tmp/release_notes.md
             echo '```bash' >> /tmp/release_notes.md
@@ -561,11 +561,11 @@ jobs:
             echo '```' >> /tmp/release_notes.md
             echo "" >> /tmp/release_notes.md
           fi
-          
+
           if [[ "${PACMAN_STATUS}" == "success" ]]; then
             echo "### Arch Linux" >> /tmp/release_notes.md
             echo '```bash' >> /tmp/release_notes.md
-            echo "sudo pacman -U ./astrum-${VERSION}-1-x86_64.pacman" >> /tmp/release_notes.md
+            echo "sudo pacman -U ./astrum-${VERSION}-1-x86_64.pkg.tar.zst" >> /tmp/release_notes.md
             echo '```' >> /tmp/release_notes.md
             echo "" >> /tmp/release_notes.md
           fi
@@ -604,11 +604,12 @@ jobs:
           prerelease: ${{ steps.get_info.outputs.prerelease == 'true' }}
           generate_release_notes: false
           files: |
-            ./packages/*.deb
-            ./packages/*.rpm
-            ./packages/*.pacman
-            ./packages/*.AppImage
-            ./packages/attestation.json
-            ./packages/*.sigstore.json
+            ${{ github.workspace }}/packages/**/*.deb
+            ${{ github.workspace }}/packages/**/*.rpm
+            ${{ github.workspace }}/packages/**/*.pacman
+            ${{ github.workspace }}/packages/**/*.pkg.tar.zst
+            ${{ github.workspace }}/packages/**/*.AppImage
+            ${{ github.workspace }}/packages/attestation.json
+            ${{ github.workspace }}/packages/*.sigstore.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
