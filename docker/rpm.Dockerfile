@@ -1,8 +1,8 @@
 # Dockerfile для сборки .rpm пакетов Astrum
-# Base: Fedora 41 (glib 2.82+, GTK4 4.16+)
-# Совместимость: Fedora 41+, RHEL 9+ (с пересборкой)
+# Base: Fedora 39 (первая версия с GTK4 4.12+ и LibAdwaita 1.4+)
+# Совместимость: Fedora 39+, RHEL 9+ (с пересборкой)
 
-FROM fedora:41
+FROM fedora:39
 
 ENV DEBIAN_FRONTEND=noninteractive
 
