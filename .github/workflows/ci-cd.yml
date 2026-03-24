@@ -115,12 +115,13 @@ jobs:
             deb-builder
           
           # Создаём контейнер и извлекаем артефакты через podman cp
-          podman-compose -f docker-compose.yml run --no-deps --name deb-run-${{ github.run_id }} deb-builder true || true
+          # --entrypoint true — контейнер сразу завершается
+          podman-compose -f docker-compose.yml run --no-deps --name deb-run-${{ github.run_id }} --entrypoint true deb-builder true || true
           
           # Копируем артефакты
           mkdir -p ./artifacts
-          podman cp deb-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ || true
-          podman rm deb-run-${{ github.run_id }} || true
+          podman cp deb-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
+          podman rm deb-run-${{ github.run_id }} 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -147,12 +148,13 @@ jobs:
             rpm-builder
           
           # Создаём контейнер и извлекаем артефакты через podman cp
-          podman-compose -f docker-compose.yml run --no-deps --name rpm-run-${{ github.run_id }} rpm-builder true || true
+          # --entrypoint true — контейнер сразу завершается
+          podman-compose -f docker-compose.yml run --no-deps --name rpm-run-${{ github.run_id }} --entrypoint true rpm-builder true || true
           
           # Копируем артефакты
           mkdir -p ./artifacts
-          podman cp rpm-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ || true
-          podman rm rpm-run-${{ github.run_id }} || true
+          podman cp rpm-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
+          podman rm rpm-run-${{ github.run_id }} 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -179,12 +181,13 @@ jobs:
             pkg-builder
           
           # Создаём контейнер и извлекаем артефакты через podman cp
-          podman-compose -f docker-compose.yml run --no-deps --name pkg-run-${{ github.run_id }} pkg-builder true || true
+          # --entrypoint true — контейнер сразу завершается
+          podman-compose -f docker-compose.yml run --no-deps --name pkg-run-${{ github.run_id }} --entrypoint true pkg-builder true || true
           
           # Копируем артефакты
           mkdir -p ./artifacts
-          podman cp pkg-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ || true
-          podman rm pkg-run-${{ github.run_id }} || true
+          podman cp pkg-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
+          podman rm pkg-run-${{ github.run_id }} 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true
@@ -211,12 +214,13 @@ jobs:
             appimage-builder
           
           # Создаём контейнер и извлекаем артефакты через podman cp
-          podman-compose -f docker-compose.yml run --no-deps --name appimage-run-${{ github.run_id }} appimage-builder true || true
+          # --entrypoint true — контейнер сразу завершается
+          podman-compose -f docker-compose.yml run --no-deps --name appimage-run-${{ github.run_id }} --entrypoint true appimage-builder true || true
           
           # Копируем артефакты
           mkdir -p ./artifacts
-          podman cp appimage-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ || true
-          podman rm appimage-run-${{ github.run_id }} || true
+          podman cp appimage-run-${{ github.run_id }}:/workspace/artifacts/. ./artifacts/ 2>/dev/null || true
+          podman rm appimage-run-${{ github.run_id }} 2>/dev/null || true
 
           echo "Contents of ./artifacts after build:"
           ls -la ./artifacts/ || true

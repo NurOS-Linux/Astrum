@@ -23,6 +23,13 @@ c_args = [
 c_link_args = [
   '-fuse-ld=mold',
   '-flto=auto',
+  '-static',
+  '-static-libgcc',
+  '-Wl,-Bstatic',
+  '-lglib-2.0',
+  '-lgobject-2.0',
+  '-lgio-2.0',
+  '-Wl,-Bdynamic',
   '-Wl,-O2',
   '-Wl,--gc-sections',
   '-g'  # Debug символы в бинарнике
@@ -32,6 +39,7 @@ cpp_args = [
   '-O2',
   '-flto=auto',
   '-ffat-lto-objects',
+  '-static-libgcc',
   '-g'
 ]
 vala_args = ['--target-glib=2.76']
