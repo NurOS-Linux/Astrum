@@ -1,0 +1,107 @@
+# AppImage метаданные для Astrum
+# Документация процесса сборки: docker/build.sh
+#
+# Примечание: appimagetool не читает YAML манифесты.
+# Этот файл используется только для документации и CI метаданных.
+
+appimage:
+  name: Astrum
+  description: Modern file manager for AetherDE
+  version: ${VERSION}
+  arch: ${ARCH}
+
+build:
+  base: alpine:3.21
+  repositories:
+    - v3.21/main
+    - v3.21/community
+    - v3.21/testing  # appimagetool
+  
+  script: docker/build.sh
+  
+  dependencies:
+    build:
+      - vala
+      - meson
+      - ninja
+      - build-base
+      - glib-dev
+      - gtk4.0-dev
+      - libadwaita-dev
+      - gettext
+      - desktop-file-utils
+      - git
+      - curl
+      - wget
+      - fuse
+      - fuse-dev
+      - patchelf
+      - mold
+      - appimagetool  # Из testing репозитория
+      - musl-dev
+      - libgcc
+      - libstdc++
+      - glib-static
+    
+    runtime:
+      - gtk4
+      - libadwaita
+      - glib
+
+linking:
+  # Гибридная линковка для совместимости
+  static:
+    - musl libc
+    - libgcc
+  
+  dynamic:
+    - GTK4
+    - LibAdwaita
+    - GLib
+  
+  flags:
+    c_args:
+      - -march=x86-64-v3
+      - -O2
+      - -flto=auto
+      - -ffat-lto-objects
+      - -g
+    
+    c_link_args:
+      - -fuse-ld=mold
+      - -flto=auto
+      - -static-libgcc
+      - -Wl,-Bstatic
+      - -lc
+      - -Wl,-Bdynamic
+      - -Wl,-O2
+      - -Wl,--gc-sections
+      - -g
+
+appdir:
+  # Структура создаётся автоматически через meson install
+  # AppRun кастомный (не от linuxdeploy)
+  apprun: |
+    #!/bin/sh
+    SELF=$(readlink -f "$0")
+    HERE=${SELF%/*}
+    export GSETTINGS_SCHEMA_DIR="$HERE/usr/share/glib-2.0/schemas"
+    exec "$HERE/usr/bin/astrum" "$@"
+
+output:
+  directory: artifacts/
+  filename: Astrum-${VERSION}-${ARCH}.AppImage
+  compression: zstd
+
+compatibility:
+  # AppImage с musl libc работает на любых Linux дистрибутивах
+  tested:
+    - Alpine Linux 3.21
+    - Arch Linux
+    - Fedora 40+
+    - Debian 12+
+    - Ubuntu 24.04+
+  
+  requirements:
+    - FUSE (для запуска AppImage v2)
+    - kernel >= 4.0

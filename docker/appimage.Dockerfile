@@ -52,6 +52,10 @@ WORKDIR /workspace
 # Копирование cross-file для meson
 COPY docker/alpine-cross.txt /workspace/alpine-cross.txt
 
+# Копирование скрипта сборки
+COPY docker/build.sh /workspace/build.sh
+RUN chmod +x /workspace/build.sh
+
 # Копирование исходников
 COPY . .
 
@@ -64,88 +68,9 @@ ENV ARCH=${ARCH}
 # Определение архитектуры
 RUN if [ "$(uname -m)" = "aarch64" ]; then export ARCH=aarch64; elif [ "$(uname -m)" = "x86_64" ]; then export ARCH=x86_64; fi
 
-# Флаги для оптимизации (дополнительно к cross-file)
-ENV CFLAGS="-O2 -march=x86-64-v3 -flto=auto -ffat-lto-objects -g"
-ENV CXXFLAGS="-O2 -march=x86-64-v3 -flto=auto -ffat-lto-objects -g"
-
-# Сборка проекта
-# --cross-file: используем кросс-файл для musl libc и оптимизаций x86-64-v3
-# needs_exe_wrapper = true отключает проверку запуска исполняемых файлов
-# Гибридная линковка: -static-libgcc -Wl,-Bstatic -lc -Wl,-Bdynamic
-RUN meson setup build \
-    --cross-file /workspace/alpine-cross.txt \
-    -Dbuildtype=release \
-    -Db_lto=true \
-    -Db_lto_mode=thin \
-    && meson compile -C build \
-    && DESTDIR=/workspace/AppDir/usr meson install -C build || { \
-        echo "Meson build failed, creating minimal AppDir..."; \
-        mkdir -p /workspace/AppDir/usr/bin; \
-    }
-
-# Создание структуры AppDir
-RUN mkdir -p /workspace/AppDir/usr/share/applications \
-    && mkdir -p /workspace/AppDir/usr/share/icons/hicolor/scalable/apps \
-    && mkdir -p /workspace/AppDir/usr/share/glib-2.0/schemas
-
-# Копирование desktop файла из исходников (fallback если meson install упал)
-RUN if [ -f /workspace/AppDir/usr/share/applications/org.aetherde.Astrum.desktop ]; then \
-        cp /workspace/AppDir/usr/share/applications/org.aetherde.Astrum.desktop /workspace/AppDir/org.aetherde.Astrum.desktop; \
-    elif [ -f /workspace/data/org.aetherde.Astrum.desktop ]; then \
-        cp /workspace/data/org.aetherde.Astrum.desktop /workspace/AppDir/org.aetherde.Astrum.desktop; \
-    else \
-        echo "[Desktop Entry]" > /workspace/AppDir/org.aetherde.Astrum.desktop; \
-        echo "Name=Astrum" >> /workspace/AppDir/org.aetherde.Astrum.desktop; \
-        echo "Exec=astrum" >> /workspace/AppDir/org.aetherde.Astrum.desktop; \
-        echo "Type=Application" >> /workspace/AppDir/org.aetherde.Astrum.desktop; \
-    fi
-
-# Копирование иконки в корень AppDir
-RUN if [ -f /workspace/AppDir/usr/share/icons/hicolor/scalable/apps/org.aetherde.Astrum.svg ]; then \
-        cp /workspace/AppDir/usr/share/icons/hicolor/scalable/apps/org.aetherde.Astrum.svg /workspace/AppDir/org.aetherde.Astrum.svg; \
-    elif [ -f /workspace/data/icons/org.aetherde.Astrum.svg ]; then \
-        cp /workspace/data/icons/org.aetherde.Astrum.svg /workspace/AppDir/org.aetherde.Astrum.svg; \
-    else \
-        echo '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="#3388ff"/><text x="24" y="32" text-anchor="middle" fill="white" font-size="14">A</text></svg>' > /workspace/AppDir/org.aetherde.Astrum.svg; \
-    fi
-
-# Компиляция GSettings схемы
-RUN if [ -d /workspace/data ]; then \
-        glib-compile-schemas /workspace/data && \
-        cp /workspace/data/gschemas.compiled /workspace/AppDir/usr/share/glib-2.0/schemas/; \
-    fi
-
-# Создание AppRun
-RUN echo '#!/bin/bash' > /workspace/AppDir/AppRun && \
-    echo 'HERE="$(dirname "$(readlink -f "${0}")")"' >> /workspace/AppDir/AppRun && \
-    echo 'export GSETTINGS_SCHEMA_DIR="${HERE}/usr/share/glib-2.0/schemas"' >> /workspace/AppDir/AppRun && \
-    echo 'exec "${HERE}/usr/bin/astrum" "$@"' >> /workspace/AppDir/AppRun && \
-    chmod +x /workspace/AppDir/AppRun
-
-# Развертывание зависимостей через linuxdeploy (без создания AppImage - FUSE не доступен)
-WORKDIR /workspace
-RUN linuxdeploy \
-    --appdir AppDir \
-    --plugin gtk \
-    --desktop-file=AppDir/org.aetherde.Astrum.desktop \
-    --icon-file=AppDir/org.aetherde.Astrum.svg \
-    --executable=AppDir/usr/bin/astrum \
-    --exclude-library=libc.so.6 \
-    --exclude-library=libm.so.6 \
-    --exclude-library=libpthread.so.0 \
-    --exclude-library=libgcc_s.so.1 \
-    --exclude-library=libstdc++.so.6 \
-    --exclude-library=libglib-2.0.so.0 \
-    --exclude-library=libgobject-2.0.so.0 \
-    --exclude-library=libgio-2.0.so.0 || echo "linuxdeploy completed with warnings"
-
-# Создание AppImage через appimagetool (не требует FUSE)
-RUN appimagetool \
-    --comp zstd \
-    --mksquashfs-opt -Xcompression-level \
-    --mksquashfs-opt 9 \
-    AppDir /workspace/artifacts/Astrum-${VERSION}-${ARCH}.AppImage || \
-    appimagetool AppDir /workspace/artifacts/Astrum-${VERSION}-${ARCH}.AppImage
+# Запуск скрипта сборки AppImage
+# build.sh выполняет: meson setup/compile/install, создание AppDir, упаковку appimagetool
+RUN /workspace/build.sh
 
 # Директория для артефактов
 VOLUME /workspace/artifacts
