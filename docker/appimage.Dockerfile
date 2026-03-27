@@ -1,5 +1,5 @@
 # Dockerfile для сборки .AppImage пакетов Astrum
-# Base: Alpine 3.21 + edge (cutting edge, GTK4 из репозитория Alpine)
+# Base: Alpine 3.21 (stable, GTK4 из репозитория Alpine)
 # Гибридная линковка:
 #   - Статически: musl libc, libgcc (для независимости от glibc)
 #   - Динамически: GTK4, libadwaita, glib (AppImage упакует .so внутри)
@@ -7,12 +7,9 @@
 
 FROM alpine:3.21
 
-# Добавляем edge репозиторий для linuxdeploy и дополнительных пакетов
-RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
-    echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
-    echo "https://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
-
-ENV APK_REPOSITORIES="https://dl-cdn.alpinelinux.org/alpine/v3.21/main\nhttps://dl-cdn.alpinelinux.org/alpine/v3.21/community\nhttps://dl-cdn.alpinelinux.org/alpine/edge/main\nhttps://dl-cdn.alpinelinux.org/alpine/edge/community\nhttps://dl-cdn.alpinelinux.org/alpine/edge/testing"
+# Alpine 3.21 stable репозитории
+# appimagetool отсутствует в репозиториях Alpine — загружаем бинарник вручную
+ENV APK_REPOSITORIES="https://dl-cdn.alpinelinux.org/alpine/v3.21/main\nhttps://dl-cdn.alpinelinux.org/alpine/v3.21/community"
 
 # Установка зависимостей для сборки
 RUN apk add --no-cache \
