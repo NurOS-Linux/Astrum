@@ -7,9 +7,9 @@
 
 FROM alpine:3.21
 
-# Alpine 3.21 stable репозитории
-# appimagetool отсутствует в репозиториях Alpine — загружаем бинарник вручную
-ENV APK_REPOSITORIES="https://dl-cdn.alpinelinux.org/alpine/v3.21/main\nhttps://dl-cdn.alpinelinux.org/alpine/v3.21/community"
+# Alpine 3.21 stable + testing репозитории
+# appimagetool доступен в testing репозитории
+ENV APK_REPOSITORIES="https://dl-cdn.alpinelinux.org/alpine/v3.21/main\nhttps://dl-cdn.alpinelinux.org/alpine/v3.21/community\nhttps://dl-cdn.alpinelinux.org/alpine/v3.21/testing"
 
 # Установка зависимостей для сборки
 RUN apk add --no-cache \
@@ -30,6 +30,7 @@ RUN apk add --no-cache \
     fuse-dev \
     patchelf \
     mold \
+    appimagetool \
     # Статические библиотеки для линковки
     musl-dev \
     libgcc \
@@ -37,12 +38,7 @@ RUN apk add --no-cache \
     glib-static \
     && rm -rf /var/cache/apk/*
 
-# Загрузка appimagetool (нет в репозитории Alpine 3.21)
-RUN curl -sSL https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage \
-    -o /usr/local/bin/appimagetool && \
-    chmod +x /usr/local/bin/appimagetool
-
-# Загрузка linuxdeploy и плагина GTK4
+# Загрузка linuxdeploy и плагина GTK4 (отсутствуют в репозиториях Alpine)
 RUN curl -sSL https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
     -o /usr/local/bin/linuxdeploy && \
     chmod +x /usr/local/bin/linuxdeploy && \
