@@ -12,6 +12,7 @@ RUN dnf install -y \
     --setopt=install_weak_deps=False \
     --setopt=tsflags=nodocs \
     vala \
+    vala-devel \
     meson \
     ninja-build \
     gtk4-devel \
@@ -24,7 +25,11 @@ RUN dnf install -y \
     git \
     mold \
     libadwaita \
+    gtk4 \
     && dnf clean all
+
+# Проверка что VAPI файлы доступны
+RUN ls -la /usr/share/vala*/vapi/libadwaita-1.vapi || echo "Warning: libadwaita VAPI not found"
 
 # Рабочая директория
 WORKDIR /workspace

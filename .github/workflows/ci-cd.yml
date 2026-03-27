@@ -12,8 +12,6 @@ on:
 
 permissions:
   contents: read           # Для checkout
-  id-token: write          # Для actions/attest@v4 (Sigstore OIDC)
-  attestations: write      # Для загрузки аттестаций
   artifact-metadata: write # Для storage records
 
 env:
@@ -302,20 +300,6 @@ jobs:
           echo "=== Generated attestation.json ==="
           cat ./artifacts/attestation.json
 
-      # Официальная аттестация GitHub (actions/attest@v4)
-      # Генерирует SLSA provenance аттестацию для всех артефактов
-      - name: Attest build provenance
-        id: attest
-        uses: actions/attest@v4
-        continue-on-error: true
-        with:
-          subject-path: |
-            ./artifacts/**/*.deb
-            ./artifacts/**/*.rpm
-            ./artifacts/**/*.pkg.tar.zst
-            ./artifacts/**/*.AppImage
-          show-summary: true
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -326,8 +310,6 @@ jobs:
             artifacts/**/*.pkg.tar.zst
             artifacts/**/*.AppImage
             artifacts/attestation.json
-            ${{ steps.attest.outputs.bundle-path }}
-            *.sigstore.json
           retention-days: 7
           if-no-files-found: warn
 
@@ -616,6 +598,5 @@ jobs:
             ${{ github.workspace }}/packages/**/*.pkg.tar.zst
             ${{ github.workspace }}/packages/**/*.AppImage
             ${{ github.workspace }}/packages/attestation.json
-            ${{ github.workspace }}/packages/*.sigstore.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
