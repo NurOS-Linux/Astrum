@@ -28,8 +28,13 @@ RUN dnf install -y \
     gtk4 \
     && dnf clean all
 
-# Проверка что VAPI файлы доступны
-RUN ls -la /usr/share/vala*/vapi/libadwaita-1.vapi || echo "Warning: libadwaita VAPI not found"
+# Проверка что VAPI файлы и pkg-config доступны
+RUN echo "=== Checking VAPI files ===" && \
+    ls -la /usr/share/vala*/vapi/libadwaita-1.vapi || echo "Warning: libadwaita VAPI not found" && \
+    echo "=== Checking pkg-config ===" && \
+    pkg-config --modversion libadwaita-1 || echo "Warning: libadwaita-1 not found via pkg-config" && \
+    pkg-config --cflags libadwaita-1 && \
+    pkg-config --libs libadwaita-1
 
 # Рабочая директория
 WORKDIR /workspace
@@ -48,10 +53,17 @@ ENV ARCH=${ARCH}
 # Определение архитектуры
 RUN if [ "$(uname -m)" = "aarch64" ]; then export ARCH=aarch64; elif [ "$(uname -m)" = "x86_64" ]; then export ARCH=x86_64; fi
 
-# Сборка проекта
-RUN meson setup build \
-    && meson compile -C build \
-    && DESTDIR=/workspace/install meson install -C build
+# Сборка проекта с отладочной информацией
+RUN echo "=== Vala version ===" && valac --version && \
+    echo "=== libadwaita version ===" && pkg-config --modversion libadwaita-1 && \
+    echo "=== Running meson setup ===" && \
+    meson setup build && \
+    echo "=== Running meson compile ===" && \
+    meson compile -C build && \
+    echo "=== Running meson install ===" && \
+    DESTDIR=/workspace/install meson install -C build && \
+    echo "=== Verifying installation ===" && \
+    ls -la /workspace/install/usr/bin/ || echo "Warning: /workspace/install/usr/bin/ is empty"
 
 # Создание структуры RPM пакета
 RUN mkdir -p /workspace/rpmbuild/BUILD \

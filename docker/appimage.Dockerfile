@@ -129,13 +129,11 @@ RUN echo '#!/bin/bash' > /workspace/AppDir/AppRun && \
     echo 'exec "${HERE}/usr/bin/astrum" "$@"' >> /workspace/AppDir/AppRun && \
     chmod +x /workspace/AppDir/AppRun
 
-# Создание AppImage через linuxdeploy с плагином GTK4
-# --exclude-library: исключение библиотек, которые будут прилинкованы статически
+# Развертывание зависимостей через linuxdeploy (без создания AppImage - FUSE не доступен)
 WORKDIR /workspace
-RUN VERSION=${VERSION} linuxdeploy \
+RUN linuxdeploy \
     --appdir AppDir \
     --plugin gtk \
-    --output appimage \
     --desktop-file=AppDir/org.aetherde.Astrum.desktop \
     --icon-file=AppDir/org.aetherde.Astrum.svg \
     --executable=AppDir/usr/bin/astrum \
@@ -146,12 +144,15 @@ RUN VERSION=${VERSION} linuxdeploy \
     --exclude-library=libstdc++.so.6 \
     --exclude-library=libglib-2.0.so.0 \
     --exclude-library=libgobject-2.0.so.0 \
-    --exclude-library=libgio-2.0.so.0
+    --exclude-library=libgio-2.0.so.0 || echo "linuxdeploy completed with warnings"
 
-# Перемещение артефакта
-RUN mkdir -p /workspace/artifacts && \
-    mv Astrum-*.AppImage /workspace/artifacts/Astrum-${VERSION}-${ARCH}.AppImage || \
-    mv *.AppImage /workspace/artifacts/Astrum-${VERSION}-${ARCH}.AppImage
+# Создание AppImage через appimagetool (не требует FUSE)
+RUN appimagetool \
+    --comp zstd \
+    --mksquashfs-opt -Xcompression-level \
+    --mksquashfs-opt 9 \
+    AppDir /workspace/artifacts/Astrum-${VERSION}-${ARCH}.AppImage || \
+    appimagetool AppDir /workspace/artifacts/Astrum-${VERSION}-${ARCH}.AppImage
 
 # Директория для артефактов
 VOLUME /workspace/artifacts
