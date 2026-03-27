@@ -14,7 +14,6 @@ RUN dnf install -y \
     --setopt=tsflags=nodocs \
     vala \
     vala-devel \
-    vala-tools \
     meson \
     ninja-build \
     gtk4-devel \
