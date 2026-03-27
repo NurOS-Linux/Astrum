@@ -8,31 +8,38 @@ FROM fedora:40
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Установка зависимостей для сборки
+# Метапакеты для Vala: каждый -devel пакет содержит .vapi файлы
 RUN dnf install -y \
     --setopt=install_weak_deps=False \
     --setopt=tsflags=nodocs \
     vala \
     vala-devel \
+    vala-tools \
     meson \
     ninja-build \
     gtk4-devel \
+    gtk4 \
     libadwaita-devel \
+    libadwaita \
     glib2-devel \
+    glib2 \
     gettext \
     desktop-file-utils \
     rpm-build \
     rpmdevtools \
     git \
     mold \
-    libadwaita \
-    gtk4 \
+    pkgconfig \
     && dnf clean all
 
 # Проверка что VAPI файлы и pkg-config доступны
 RUN echo "=== Checking VAPI files ===" && \
-    ls -la /usr/share/vala*/vapi/libadwaita-1.vapi || echo "Warning: libadwaita VAPI not found" && \
+    ls -la /usr/share/vala*/vapi/gtk4.vapi || echo "ERROR: gtk4.vapi not found" && \
+    ls -la /usr/share/vala*/vapi/libadwaita-1.vapi || echo "ERROR: libadwaita-1.vapi not found" && \
+    ls -la /usr/share/vala*/vapi/glib-2.0.vapi || echo "ERROR: glib-2.0.vapi not found" && \
     echo "=== Checking pkg-config ===" && \
-    pkg-config --modversion libadwaita-1 || echo "Warning: libadwaita-1 not found via pkg-config" && \
+    pkg-config --modversion libadwaita-1 && \
+    pkg-config --modversion gtk4 && \
     pkg-config --cflags libadwaita-1 && \
     pkg-config --libs libadwaita-1
 
