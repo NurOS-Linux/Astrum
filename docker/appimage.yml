@@ -1,8 +1,8 @@
 # AppImage метаданные для Astrum
 # Документация процесса сборки: docker/build.sh
 #
-# Примечание: appimagetool не читает YAML манифесты.
-# Этот файл используется только для документации и CI метаданных.
+# Примечание: appimagetool отсутствует в репозиториях Alpine.
+# Бинарник загружается вручную с GitHub Releases.
 
 appimage:
   name: Astrum
@@ -15,7 +15,6 @@ build:
   repositories:
     - v3.21/main
     - v3.21/community
-    - v3.21/testing  # appimagetool
   
   script: docker/build.sh
   
@@ -28,6 +27,41 @@ build:
       - glib-dev
       - gtk4.0-dev
       - libadwaita-dev
+      - gettext
+      - desktop-file-utils
+      - git
+      - curl
+      - wget
+      - fuse
+      - fuse-dev
+      - patchelf
+      - mold
+      - musl-dev
+      - libgcc
+      - libstdc++
+      - glib-static
+    
+    runtime:
+      - gtk4
+      - libadwaita
+      - glib
+  
+  tools:
+    # appimagetool и linuxdeploy отсутствуют в apk — загружаем вручную
+    appimagetool:
+      url: https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+      dest: /usr/local/bin/appimagetool
+      chmod: +x
+    
+    linuxdeploy:
+      url: https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+      dest: /usr/local/bin/linuxdeploy
+      chmod: +x
+    
+    linuxdeploy-plugin-gtk:
+      url: https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/releases/download/continuous/linuxdeploy-plugin-gtk-x86_64.AppImage
+      dest: /usr/local/bin/linuxdeploy-plugin-gtk
+      chmod: +x
       - gettext
       - desktop-file-utils
       - git
